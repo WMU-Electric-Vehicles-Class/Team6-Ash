@@ -1,3 +1,3 @@
 # Team6-Ash
-Team members: 
+#Team members: 
 Amanda Vella, Srinivasan Subramaniam, Hamed Sanei
