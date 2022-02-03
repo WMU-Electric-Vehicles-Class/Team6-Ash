@@ -7,3 +7,5 @@ Amanda Vella
 
 ## Team Name Origin
 Team ASH got it's name by taking the first initial of each team member's name.
+
+## Finally found the way to complete problem 2
