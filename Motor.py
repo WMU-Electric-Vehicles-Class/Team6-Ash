@@ -63,4 +63,7 @@ power_motor_W=angular_speed_rpm_motor*torque_motor_Nm
 battery_capacity_kWh=82
 usable_battery_capacity_kWh=75
 SOC_full=1.0
-SOC_min=0.10
+SOC_min=0.1
+
+# Plot SOC
+
