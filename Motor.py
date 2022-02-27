@@ -67,3 +67,35 @@ SOC_min=0.1
 
 # Plot SOC
 
+Pb = power_motor_W
+vb = 400
+Rbi = 0.320
+Ctb = (82000/vb)
+t0 = 0
+SOC =1
+
+#print ("FR : ", FR)
+#print ("Pb : ", Pb)
+
+time_list = []
+SOC_list = []
+Sum_SOC_list = []
+I0 = ((vb)-((vb**2)-4*Rbi*Pb)**0.5)/(2*Rbi)
+print("I : ", I0)
+
+for t0 in range (8):
+    time_list.append(t0)
+    t1 = t0+1
+    SOC = SOC - (I0/Ctb)*(t1-t0)
+#    SOC = (SOC - ((I0/Ctb)*(0.5)*((t1**2)-(t0**2))))
+
+    SOC_Percent = SOC*100
+    SOC_list.append(SOC_Percent)
+  #   print("SOC: ", SOC)
+
+
+plt.plot(time_list,SOC_list)
+plt.xlabel('Time (h)')
+plt.ylabel('Sate of Charge (%)')
+plt.grid()
+plt.show()
