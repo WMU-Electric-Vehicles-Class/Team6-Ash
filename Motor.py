@@ -113,6 +113,7 @@ for t0 in range (8):
     SOC_list.append(SOC_Percent)
   #   print("SOC: ", SOC)
 
+
 plt.plot(time_list,SOC_list)
 plt.xlabel('Time (h)')
 plt.ylabel('Sate of Charge (%)')
