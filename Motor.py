@@ -101,7 +101,7 @@ time_list = []
 SOC_list = []
 Sum_SOC_list = []
 I0 = ((vb)-((vb**2)-4*Rbi*Pb)**0.5)/(2*Rbi)
-print("I : ", I0)
+#print("I : ", I0)
 
 for t0 in range (8):
     time_list.append(t0)
