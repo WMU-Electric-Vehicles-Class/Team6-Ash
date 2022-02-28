@@ -38,26 +38,46 @@ udds_accel_ms2=np.diff(udds_speed_ms,prepend=0)
 
 # Vehicle parameters
 empty_vehicle_weight_kg=2232
+g=9.81
+
+#Force due to mass of the vehicel (Fm) in Newton
+Fm=empty_vehicle_weight_kg*udds_accel_ms2
+
+#Force due to Rolling Resistance (Frr) in Newton
+#Crr = Rolling Resistance Coefficient
+Crr=0.015 #Assumed from example probelm
+Frr=Crr*empty_vehicle_weight_kg*g
+
+#Aerodynamic force (Fd) in Newton
+#Cd=Drag Coefficient
+Cd=0.28
+Air_Density=1.2
+Vehicle_Height_m=1.443
+Vehicle_Width_m=1.849
+Vehicle_Front_Area_m2=Vehicle_Height_m*Vehicle_Width_m
+Fd=0.5*Cd*Air_Density*Vehicle_Front_Area_m2*udds_speed_ms**2
+
+#Total Force (Ft) in Newton
+Ft=Fd+Frr+Fm
+
+#Force in each wheels (Fw) in Newton
+Fw=Ft/4
 
 # Wheel parameters with 18" diameter
 wheel_radius_m=.2286
 
+# torque per wheel in Nm
+wheel_torque_Nm=Fw*wheel_radius_m
+
 # angular velocity of wheel
 angular_speed_rads=(udds_speed_ms)/wheel_radius_m
-angular_speed_wheel_rpm=angular_speed_rads*(60/2*math.pi)
-
-# F=ma
-net_force=empty_vehicle_weight_kg*udds_accel_ms2
-force_per_wheel=net_force/4
-
-# torque per wheel in Nm
-torque_wheel=force_per_wheel*wheel_radius_m
+wheel_rpm=angular_speed_rads*(60/2*math.pi)
 
 # motor angular velocity from axle 9:1 ratio, applies to both motors
-gear_ratio=9
-angular_speed_rpm_motor=angular_speed_wheel_rpm*gear_ratio
-torque_motor_Nm=torque_wheel/gear_ratio
-power_motor_W=angular_speed_rpm_motor*torque_motor_Nm
+gear_ratio=9.036
+motor_rpm=wheel_rpm*gear_ratio
+motor_torque_Nm=wheel_torque_Nm/gear_ratio
+power_motor_kW=motor_rpm*motor_torque_Nm*(2*math.pi/60)
 
 # Battery Parameters
 battery_capacity_kWh=82
@@ -67,7 +87,7 @@ SOC_min=0.1
 
 # Plot SOC
 
-Pb = power_motor_W
+Pb = power_motor_kW
 vb = 400
 Rbi = 0.320
 Ctb = (82000/vb)
