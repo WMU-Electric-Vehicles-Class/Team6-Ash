@@ -40,7 +40,7 @@ udds_accel_ms2=np.diff(udds_speed_ms,prepend=0)
 empty_vehicle_weight_kg=2232
 g=9.81
 
-###################  Force due to mass of the vehicel (Fm) in Newton ########################
+###################  Force due to mass of the vehicle (Fm) in Newton ########################
 Fm=empty_vehicle_weight_kg*udds_accel_ms2
 
 #Force due to Rolling Resistance (Frr) in Newton
@@ -57,17 +57,17 @@ Vehicle_Width_m=1.849
 Vehicle_Front_Area_m2=Vehicle_Height_m*Vehicle_Width_m
 Fd=0.5*Cd*Air_Density*Vehicle_Front_Area_m2*udds_speed_ms**2
 
-#Total Force (Ft) in Newton
-Ft=Fd+Frr+Fm
+#Total Force (Fprop) in Newton
+Fprop=Fd+Frr+Fm
 
-#Force in each wheels (Fw) in Newton
-Fw=Ft/4
+#Force in each axle (Fw) in Newton
+Faxle=Fprop/2
 
 # Wheel parameters with 18" diameter
 wheel_radius_m=.2286
 
 ################## torque per wheel in Nm ###########################
-wheel_torque_Nm=Fw*wheel_radius_m
+wheel_torque_Nm=Faxle*wheel_radius_m
 
 # angular velocity of wheel
 angular_speed_rads=(udds_speed_ms)/wheel_radius_m
@@ -77,8 +77,11 @@ wheel_rpm=angular_speed_rads*(60/2*math.pi)
 gear_ratio=9.036
 motor_rpm=wheel_rpm*gear_ratio
 motor_torque_Nm=wheel_torque_Nm/gear_ratio
-power_motor_kW=motor_rpm*motor_torque_Nm*(2*math.pi/60)
-power_motor_W=power_motor_kW/1000
+
+############## Power required by Battery #######################
+Pbatt_kW=motor_rpm*motor_torque_Nm*(2*math.pi/60)
+Pbatt_W=Pbatt_kW/1000
+
 
 
 ###################### Battery Parameters #################################
@@ -128,25 +131,34 @@ for I in (I0_list):
 
 # #########################   SOC    ######################################
 
-dSOC =1
-SOC_list = []
-I1_list =[]
-for power in (Pb_list):
-    sq = ((battery_Voltage_max)-(abs(battery_Voltage_max**2)-4*Rbi*power)**0.5)
+#dSOC =1
+#SOC_list = []
+#I1_list =[]
+#for power in (Pb_list):
+    #sq = ((battery_Voltage_max)-(abs(battery_Voltage_max**2)-4*Rbi*power)**0.5)
     # if sq < 0 :
     #     sq*(-1)
     #     continue
-    I1 = sq/(2*Rbi)
-    I1_list.append(sq)
+    #I1 = sq/(2*Rbi)
+    #I1_list.append(sq)
 
-    for I in (I1_list):
-        dSOC = -(I/3600)/Ctb     
-        SOC = SOC + (I/Ctb)*dSOC
+    #for I in (I1_list):
+        #dSOC = -(I/3600)/Ctb     
+        #SOC = SOC + (I/Ctb)*dSOC
         # if SOC < SOC_min:
         #     SOC=0
         # else:
-        SOC_list.append(SOC)
-   
+        #SOC_list.append(SOC)
+
+battery_capacity_Ah=33
+battery_capacity_As=33*3600
+open_circuit_voltage=battery_Voltage
+SOC=[1]                                 #initialize SOC at 100%
+for i in range(1,len(udds_time_s)):
+    SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs((open_circuit_voltage**2)-4*Internal_resistance*Pbatt_W[i])))/(2*Internal_resistance*battery_capacity_As))
+SOC_percent = [i * 100 for i in SOC]
+
+
 ##############################  Plot Current, Power, SOC  VS time  #####################
 
 plt.plot(udds_time_s,I0_list)
@@ -162,18 +174,20 @@ plt.ylabel('Power (w)')
 plt.grid()
 plt.show()
 
-plt.plot(udds_time_s,udds_speed_ms)
-plt.xlabel('time(s)')
-plt.ylabel('Speed (m/s)')
+# UDDS Plot
+#plt.plot(udds_time_s,udds_speed_ms)
+#plt.xlabel('time(s)')
+#plt.ylabel('Speed (m/s)')
+#plt.grid()
+#plt.show()
+
+# Plot SOC for UDDS
+plt.plot(udds_time_s,SOC_percent)
+plt.title('SOC(%) for UDDS')
+plt.xlabel('time')
+plt.ylabel('SOC(%)')
 plt.grid()
 plt.show()
-
-
-# plt.plot(udds_time_s,SOC_list)
-# plt.xlabel('time')
-# plt.ylabel('SOC(%)')
-# plt.grid()
-# plt.show()
 
 # ##########################   Argonne  Benze ###################################
 
