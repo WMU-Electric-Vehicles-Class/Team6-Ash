@@ -3,7 +3,7 @@ import math
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.integrate import quad
-
+from scipy.interpolate import LinearNDInterpolator
 
 ################### Efficiency map data points for IPM-synRM rear motor ####################
 RM_Speed_rpm=np.array([200,100,500,12000,3000,1000,2000,6000,10000,4000,2000,10000,8700,2000,2000,4000,8000,1000,6000,4000,4000,6000,5000,3000])
@@ -16,6 +16,24 @@ plt.xlabel('Motor Speed (rpm)')
 plt.ylabel('Motor Torque (Nm)')
 plt.title('Efficiency Map for IPM-synRM')
 plt.show()
+
+interp_rear = LinearNDInterpolator((RM_Speed_rpm, RM_Torque_Nm), RM_efficiency)
+
+xnew = np.linspace(min(RM_Speed_rpm), max(RM_Speed_rpm), 500)
+ynew = np.linspace(min(RM_Torque_Nm), max(RM_Torque_Nm), 500)
+xnew, ynew = np.meshgrid(xnew, ynew)
+znew = interp_rear(xnew, ynew)
+
+fig = plt.figure(figsize=(10,10))
+ax = plt.axes(projection='3d')
+ax.view_init(elev=90, azim=-90)
+surf = ax.plot_surface(xnew, ynew, znew, cmap="coolwarm",
+                       linewidth=0, antialiased=False)
+
+x_test = 1000
+y_test = 100
+z_test = interp_rear(x_test, y_test)
+float(z_test)
 
 ########################### Efficiency map data points for AC Induction front motor #####################
 AC_Speed_rpm=np.array([250,1750,500,1500,1000,750,600,1750,750,1750,1500,1000,1000,1000,1750,1500,1250,1500,1750,2500,4750,400,100,100,4000,350,2750,2500,2500,500,250,250,750,1000,750,500])
