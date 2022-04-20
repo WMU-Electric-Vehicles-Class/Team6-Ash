@@ -1,7 +1,7 @@
-
 import math
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.interpolate import LinearNDInterpolator
 from scipy.integrate import quad
 
 
@@ -78,11 +78,25 @@ gear_ratio=9.036
 motor_rpm=wheel_rpm*gear_ratio
 motor_torque_Nm=wheel_torque_Nm/gear_ratio
 
-############## Power required by Battery #######################
-Pbatt_kW=motor_rpm*motor_torque_Nm*(2*math.pi/60)
+plt.plot(motor_rpm, motor_torque_Nm)
+plt.show()
+
+############## Motor Power_Output Power #######################
+Pmotor_kW=motor_rpm*motor_torque_Nm*(2*math.pi/60)
+
+############## Interpolating Motor Efficiency_IPM-synRM rear motor #######################
+RM_Eff_interpol = LinearNDInterpolator((RM_Speed_rpm, RM_Torque_Nm), RM_efficiency)
+Motor_eff_rear_percent = RM_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
+Motor_eff_rear = Motor_eff_rear_percent/100
+print(Motor_eff_rear)
+
+############## Battery Power_Input Power #######################
+Pbatt_kW= Pmotor_kW/Motor_eff_rear
 Pbatt_W=Pbatt_kW/1000
 
-
+plt.plot(motor_rpm, Pmotor_kW)
+plt.plot(motor_rpm, Pbatt_kW)
+plt.show()
 
 ###################### Battery Parameters #################################
 
@@ -294,6 +308,7 @@ plt.xlabel('decelerate (m/s)')
 plt.ylabel('Recuperated Energy Efficiency (%)')
 plt.grid()
 plt.show()
+
 ##########################    SOC  ################################
 import numpy as np
 from matplotlib import pyplot as plt
