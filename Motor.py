@@ -42,6 +42,8 @@ udds_time_s = udds[:, 0]
 udds_speed_mph = udds[:, 1]
 udds_speed_ms = udds_speed_mph*.44704
 udds_accel_ms2 = np.diff(udds_speed_ms, prepend=0)
+distance_m_udd = np.cumsum(udds_speed_ms)
+Distance_mi = distance_m_udd/1609
 
 ##################### Vehicle parameters  ##############################
 empty_vehicle_weight_kg = 2232
@@ -206,6 +208,13 @@ SOC_percent = [i * 100 for i in SOC]
 plt.plot(udds_time_s, SOC_percent)
 plt.title('SOC(%) for UDDS')
 plt.xlabel('time')
+plt.ylabel('SOC(%)')
+plt.grid()
+plt.show()
+
+plt.plot(Distance_mi, SOC_percent)
+plt.title('SOC(%) for UDDS')
+plt.xlabel('Distance in miles')
 plt.ylabel('SOC(%)')
 plt.grid()
 plt.show()
