@@ -1,7 +1,7 @@
-
 import math
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.interpolate import LinearNDInterpolator
 from scipy.integrate import quad
 from scipy.interpolate import LinearNDInterpolator
 
@@ -58,7 +58,7 @@ udds_accel_ms2=np.diff(udds_speed_ms,prepend=0)
 empty_vehicle_weight_kg=2232
 g=9.81
 
-###################  Force due to mass of the vehicel (Fm) in Newton ########################
+###################  Force due to mass of the vehicle (Fm) in Newton ########################
 Fm=empty_vehicle_weight_kg*udds_accel_ms2
 
 #Force due to Rolling Resistance (Frr) in Newton
@@ -75,17 +75,17 @@ Vehicle_Width_m=1.849
 Vehicle_Front_Area_m2=Vehicle_Height_m*Vehicle_Width_m
 Fd=0.5*Cd*Air_Density*Vehicle_Front_Area_m2*udds_speed_ms**2
 
-#Total Force (Ft) in Newton
-Ft=Fd+Frr+Fm
+#Total Force (Fprop) in Newton
+Fprop=Fd+Frr+Fm
 
-#Force in each wheels (Fw) in Newton
-Fw=Ft/4
+#Force in each axle (Fw) in Newton
+Faxle=Fprop/2
 
 # Wheel parameters with 18" diameter
 wheel_radius_m=.2286
 
 ################## torque per wheel in Nm ###########################
-wheel_torque_Nm=Fw*wheel_radius_m
+wheel_torque_Nm=Faxle*wheel_radius_m
 
 # angular velocity of wheel
 angular_speed_rads=(udds_speed_ms)/wheel_radius_m
@@ -95,9 +95,26 @@ wheel_rpm=angular_speed_rads*(60/2*math.pi)
 gear_ratio=9.036
 motor_rpm=wheel_rpm*gear_ratio
 motor_torque_Nm=wheel_torque_Nm/gear_ratio
-power_motor_kW=motor_rpm*motor_torque_Nm*(2*math.pi/60)
-power_motor_W=power_motor_kW/1000
 
+plt.plot(motor_rpm, motor_torque_Nm)
+plt.show()
+
+############## Motor Power_Output Power #######################
+Pmotor_kW=motor_rpm*motor_torque_Nm*(2*math.pi/60)
+
+############## Interpolating Motor Efficiency_IPM-synRM rear motor #######################
+RM_Eff_interpol = LinearNDInterpolator((RM_Speed_rpm, RM_Torque_Nm), RM_efficiency)
+Motor_eff_rear_percent = RM_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
+Motor_eff_rear = Motor_eff_rear_percent/100
+print(Motor_eff_rear)
+
+############## Battery Power_Input Power #######################
+Pbatt_kW= Pmotor_kW/Motor_eff_rear
+Pbatt_W=Pbatt_kW/1000
+
+plt.plot(motor_rpm, Pmotor_kW)
+plt.plot(motor_rpm, Pbatt_kW)
+plt.show()
 
 ###################### Battery Parameters #################################
 
@@ -146,25 +163,34 @@ for I in (I0_list):
 
 # #########################   SOC    ######################################
 
-dSOC =1
-SOC_list = []
-I1_list =[]
-for power in (Pb_list):
-    sq = ((battery_Voltage_max)-(abs(battery_Voltage_max**2)-4*Rbi*power)**0.5)
+#dSOC =1
+#SOC_list = []
+#I1_list =[]
+#for power in (Pb_list):
+    #sq = ((battery_Voltage_max)-(abs(battery_Voltage_max**2)-4*Rbi*power)**0.5)
     # if sq < 0 :
     #     sq*(-1)
     #     continue
-    I1 = sq/(2*Rbi)
-    I1_list.append(sq)
+    #I1 = sq/(2*Rbi)
+    #I1_list.append(sq)
 
-    for I in (I1_list):
-        dSOC = -(I/3600)/Ctb     
-        SOC = SOC + (I/Ctb)*dSOC
+    #for I in (I1_list):
+        #dSOC = -(I/3600)/Ctb     
+        #SOC = SOC + (I/Ctb)*dSOC
         # if SOC < SOC_min:
         #     SOC=0
         # else:
-        SOC_list.append(SOC)
-   
+        #SOC_list.append(SOC)
+
+battery_capacity_Ah=33
+battery_capacity_As=33*3600
+open_circuit_voltage=battery_Voltage
+SOC=[1]                                 #initialize SOC at 100%
+for i in range(1,len(udds_time_s)):
+    SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs((open_circuit_voltage**2)-4*Internal_resistance*Pbatt_W[i])))/(2*Internal_resistance*battery_capacity_As))
+SOC_percent = [i * 100 for i in SOC]
+
+
 ##############################  Plot Current, Power, SOC  VS time  #####################
 
 plt.plot(udds_time_s,I0_list)
@@ -180,18 +206,20 @@ plt.ylabel('Power (w)')
 plt.grid()
 plt.show()
 
-plt.plot(udds_time_s,udds_speed_ms)
-plt.xlabel('time(s)')
-plt.ylabel('Speed (m/s)')
+# UDDS Plot
+#plt.plot(udds_time_s,udds_speed_ms)
+#plt.xlabel('time(s)')
+#plt.ylabel('Speed (m/s)')
+#plt.grid()
+#plt.show()
+
+# Plot SOC for UDDS
+plt.plot(udds_time_s,SOC_percent)
+plt.title('SOC(%) for UDDS')
+plt.xlabel('time')
+plt.ylabel('SOC(%)')
 plt.grid()
 plt.show()
-
-
-# plt.plot(udds_time_s,SOC_list)
-# plt.xlabel('time')
-# plt.ylabel('SOC(%)')
-# plt.grid()
-# plt.show()
 
 # ##########################   Argonne  Benze ###################################
 
@@ -298,3 +326,97 @@ plt.xlabel('decelerate (m/s)')
 plt.ylabel('Recuperated Energy Efficiency (%)')
 plt.grid()
 plt.show()
+
+##########################    SOC  ################################
+import numpy as np
+from matplotlib import pyplot as plt
+
+
+###############################################################################
+# Federal Test Procedure
+udds = np.loadtxt('HW4/uddscol.txt', dtype=int)
+udds_time_s = udds[:, 0]
+speed_mph = udds[:, 1]
+speed_kph = speed_mph * 1.6
+udds_speed_ms = udds[:, 1]*0.44704
+udds_accel_ms2 = np.diff(udds_speed_ms, prepend=0)
+distance_m = np.cumsum(udds_speed_ms)
+distance_mi = distance_m * 0.000621371
+
+#############################  Mechanical Parameters ###########################
+Vehicle_mass_kg = 2232
+Max_Genarator_EM_speed_rpm = 10000
+Max_traction_EM_speed_rpm = 13500
+Coeff_drag = 0.259
+Frontal_area_m2 = 2.34
+Coeff_rolling = 0.008
+Final_Drive_Ratio = 3.543
+Ring_Gear_Num_Teeth = 78
+Sun_Gear_Num_Teeth = 30
+Wheel_Radius_m = 0.317
+Air_Density = 1.2
+g = 9.81
+
+
+#############################  Battery Parameters ###########################
+R_int = 0.32
+Battery_Cap_A_h = 205
+Voltage_open_c_v = 400
+
+###############################      SOC       ##############################
+soc = 1
+
+
+class SOC:
+    power_battery = []
+    battery_current_list = []
+    dsoc_list = []
+    soc_list = []
+    f1_list = []
+    f2_list = []
+    soc_final_list = []
+
+    for v in (udds_speed_ms):
+        f1 = (0.5)*(Coeff_drag)*(Air_Density)*(Frontal_area_m2) * \
+            (v**2)+(Coeff_rolling)*(Vehicle_mass_kg)*(g)
+        f1_list.append(f1)
+
+    for i in (udds_accel_ms2):
+        f2 = (Vehicle_mass_kg * i)
+        if f2 <= 0:
+            f2 = 0
+        f2_list.append(f2)
+    power_battery = [x + y for (x, y) in zip(f1_list, f2_list)] * udds_speed_ms
+    #power_battery = F_prob * udds_speed_ms
+    for w in (power_battery):
+        delta = (Voltage_open_c_v**2) - (4*w*R_int)
+        if delta == 0:
+            delta_sign = 0
+        if delta > 0:
+            delta_sign = 1
+        else:
+            delta_sign = -1
+        battery_current = (Voltage_open_c_v -
+                           (np.sqrt(delta_sign * delta)))/(2*R_int)
+        battery_current_list.append(battery_current)
+
+    for i in (battery_current_list):
+        dsoc = i*(1/3600)*(-1/Battery_Cap_A_h)
+        dsoc_list.append(dsoc)
+
+    for dsoc in (dsoc_list):
+        soc = soc + dsoc
+        if soc <= 0.1:
+            soc = 0
+        if soc > 1:
+            soc = 1
+        soc_list.append(soc)
+    for i in soc_list:
+        soc_final = i * 100
+        soc_final_list.append(soc_final)
+    plt.plot(udds_time_s, soc_final_list)
+    plt.xlabel('Time Cycle(s)')
+    plt.ylabel('SOC(%)')
+    #plt.title('SOC(%) VS Time(s) - UDDS Drive Cycle')
+    plt.grid()
+    plt.show()
