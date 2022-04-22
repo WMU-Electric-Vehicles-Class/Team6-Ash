@@ -355,8 +355,6 @@ Voltage_open_c_v = 400
 
 ###############################      SOC       ##############################
 soc = 1
-
-power_battery = []
 battery_current_list = []
 dsoc_list = []
 soc_list = []
@@ -375,7 +373,8 @@ for i in (udds_accel_ms2):
     #     f2 = 0
     f2_list.append(f2)
 power_battery = [x + y for (x, y) in zip(f1_list, f2_list)] * udds_speed_ms
-for w in (power_battery):
+Real_power_battery = power_battery * Motor_eff_rear
+for w in (Real_power_battery):
     delta = (Voltage_open_c_v**2) - (4*w*R_int)
     if delta == 0:
         delta_sign = 0
@@ -405,6 +404,13 @@ for i in soc_list:
 # plt.plot(udds_time_s, soc_final_list)
 # plt.xlabel('Time Cycle(s)')
 # plt.ylabel('SOC(%)')
-# #plt.title('SOC(%) VS Time(s) - UDDS Drive Cycle')
+# plt.grid()
+# plt.show()
+
+
+# plt.plot(udds_time_s, power_battery,Real_power_battery)
+# plt.legend(['Power Battery','Power Battery by appling EM efficiency'])
+# plt.xlabel('Time Cycle(s)')
+# plt.ylabel('SOC(%)')
 # plt.grid()
 # plt.show()
