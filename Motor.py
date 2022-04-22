@@ -334,96 +334,136 @@ for i in range(-30, -1):
 # plt.grid()
 # plt.show()
 
-##########################    SOC  ################################
 
 
-###############################################################################
-# Federal Test Procedure
-udds = np.loadtxt('uddscol_.txt', dtype=int)
-udds_time_s = udds[:, 0]
-speed_mph = udds[:, 1]
-speed_kph = speed_mph * 1.6
-udds_speed_ms = udds[:, 1]*0.44704
-udds_accel_ms2 = np.diff(udds_speed_ms, prepend=0)
-distance_m = np.cumsum(udds_speed_ms)
-distance_mi = distance_m * 0.000621371
+####################### SOC
+####################### SOC vs Distance
+####################### SOC vs weight
+####################### Normal speed vs limited speed
+####################### Compare SOC with the speed limit
+####################### Compare SOC with Fastsim Model
 
-#############################  Mechanical Parameters ###########################
-Vehicle_mass_kg = 2232
-Coeff_drag = 0.259
-Frontal_area_m2 = 2.34
-Coeff_rolling = 0.008
-Air_Density = 1.2
-g = 9.81
+Speed_limit = 8.94  # 8.94 m/s = 20 mile/hour
 
-#############################  Battery Parameters ###########################
-R_int = 0.32
-Battery_Cap_A_h = 205
-Voltage_open_c_v = 400
-
-###############################      SOC       ##############################
-soc = 0.9
-battery_current_list = []
-dsoc_list = []
-soc_list = []
-f1_list = []
-f2_list = []
-soc_final_list = []
-
-for v in (udds_speed_ms):
-    f1 = (0.5)*(Coeff_drag)*(Air_Density)*(Frontal_area_m2) * \
-        (v**2)+(Coeff_rolling)*(Vehicle_mass_kg)*(g)
-    f1_list.append(f1)
-
-for i in (udds_accel_ms2):
-    f2 = (Vehicle_mass_kg * i)
-    # if f2 <= 0:
-    #     f2 = 0
-    f2_list.append(f2)
-power_battery = [x + y for (x, y) in zip(f1_list, f2_list)] * udds_speed_ms
-Real_power_battery = power_battery * Motor_eff_rear
-for w in (Real_power_battery):
-    delta = (Voltage_open_c_v**2) - (4*w*R_int)
-    if delta == 0:
-        delta_sign = 0
-    if delta > 0:
-        delta_sign = 1
-    else:
-        delta_sign = -1
-    battery_current = (Voltage_open_c_v -
-                       (np.sqrt(delta_sign * delta)))/(2*R_int)
-    battery_current_list.append(battery_current)
-
-for i in (battery_current_list):
-    dsoc = i*(1/3600)*(-1/Battery_Cap_A_h)
-    dsoc_list.append(dsoc)
-
-for dsoc in (dsoc_list):
-    soc = soc + dsoc
-    if soc <= 0.1:
-        soc = 0
-    if soc > 1:
-        soc = 1
-    soc_list.append(soc)
-for i in soc_list:
-    soc_final = i * 100
-    soc_final_list.append(soc_final)
-
-# plt.plot(udds_time_s, soc_final_list)
-# plt.xlabel('Time Cycle(s)')
-# plt.ylabel('SOC(%)')
-# plt.grid()
-# plt.show()
+udds_speed_ms_l =[]
+for i in udds_speed_ms:
+    if i>Speed_limit:
+        i = Speed_limit
+    udds_speed_ms_l.append(i)
+udds_speed_ms_under_limited=np.array(udds_speed_ms_l)
 
 
-# plt.plot(udds_time_s, power_battery,Real_power_battery)
-# plt.legend(['Power Battery','Power Battery by appling EM efficiency'])
-# plt.xlabel('Time Cycle(s)')
-# plt.ylabel('SOC(%)')
-# plt.grid()
-# plt.show()
+class Battery:
+    def __init__(self):
+        self.v_mass = 2232
+        self.Coeff_drag = 0.259
+        self.Frontal_area = 2.34
+        self.Coeff_rolling = 0.008
+        self.Air_Density = 1.2
+        self.R_int = 0.32
+        self.Battery_Cap_A_h = 205
+        self.Voltage_open_c_v = 400
+        self.g = 9.81
+        self.speed = udds_speed_ms
+        self.acc = udds_accel_ms2
 
-###################################   Fastsim Model   ######################
+    def D_soc(self):
+        f1_list = []
+        f2_list = []
+        for v in self.speed:
+            f1 = (0.5)*(self.Coeff_drag)*(self.Air_Density)*(self.Frontal_area) * \
+                (v**2) + (self.Coeff_rolling)*(self.v_mass)*(self.g)
+            f1_list.append(f1)
+        for i in (self.acc):
+            f2 = (self.v_mass * i)
+            # if f2 <= 0:
+            #     f2 = 0
+            f2_list.append(f2)
+        F_prob = [x + y for (x, y) in zip(f1_list, f2_list)]
+        b_power = F_prob * self.speed
+        Real_power_battery = b_power * Motor_eff_rear
+        delta = (self.Voltage_open_c_v**2) - (4*Real_power_battery*self.R_int)
+        b_current = (self.Voltage_open_c_v -
+                     (np.sqrt(abs(delta))))/(2*self.R_int)
+        dsoc = b_current*(1/3600)*(-1/self.Battery_Cap_A_h)
+        return dsoc
+
+    def SOC(dsoc):
+        soclist = []
+        soc = 0.9
+        for i in dsoc:
+            soc = (soc + i)
+            if soc <= 0.1:
+                soc = 0
+            if soc > 1:
+                soc = 1
+            soclist.append(soc*100)
+        return (soclist)
+
+
+
+
+###################################################         SOC      #####################################
+s1 = Battery()
+ss = Battery.D_soc(s1)
+Final_SOC_Percent = Battery.SOC(ss)
+
+plt.plot(udds_time_s, Final_SOC_Percent)
+plt.xlabel('Time Cycle(s)')
+plt.ylabel('SOC(%)')
+plt.grid()
+plt.show()
+
+##################################################### Normal speed vs limited speed   ###########################
+
+plt.plot(udds_time_s, udds_speed_ms, udds_speed_ms_under_limited)
+plt.xlabel('Time Cycle(s)')
+plt.ylabel('SOC(%)')
+plt.legend(["UDDS velocity", "UDDS velocity that limited to under 10 m/s"])
+plt.grid()
+plt.show()
+
+######################################################   SOC vs the speed limit   ###########################
+sp = Battery()
+sp.speed=udds_speed_ms_under_limited
+sp1 = Battery.D_soc(sp)
+SOC_speed_limit = Battery.SOC(sp1)
+
+plt.plot(udds_time_s, SOC_speed_limit, Final_SOC_Percent)
+plt.xlabel('Time Cycle(s)')
+plt.ylabel('SOC(%)')
+plt.legend(["velocity limited to under 10 m/s", "For all velocity", ])
+plt.grid()
+plt.show()
+
+############################################################ SOC vs weight   #################################
+s2 = Battery()
+s2.v_mass = 1785   # 20 percent less
+s2d = Battery.D_soc(s2)
+Final_SOC_less_weight = Battery.SOC(s2d)
+
+s3 = Battery()
+s3.v_mass = 2678.4   # 20 percent more
+s3d = Battery.D_soc(s3)
+Final_SOC_more_weight = Battery.SOC(s3d)
+
+plt.plot(udds_time_s, Final_SOC_Percent, Final_SOC_less_weight)
+plt.plot(udds_time_s, Final_SOC_more_weight)
+plt.xlabel('Time Cycle(s)')
+plt.ylabel('SOC(%)')
+plt.legend(["Actual weight", "20 % lighter", "20 % Heavier"])
+plt.grid()
+plt.show()
+
+######################################## SOC vs Distance  ################################
+plt.plot(Distance_mi, Final_SOC_Percent)
+plt.title('SOC(%) for UDDS')
+plt.xlabel('Distance in miles')
+plt.ylabel('SOC(%)')
+plt.grid()
+plt.show()
+
+###################################   Fastsim MOdel   ######################
 
 veh = vehicle.Vehicle(22)
 veh.Scenario_name
@@ -437,13 +477,12 @@ y = (sim.soc)*100
 
 fig = plt.figure(figsize=(6, 4))
 ax1 = fig.add_subplot()
-
 ax1.plot(x, y)
-ax1.plot(x,soc_final_list)
+ax1.plot(x,Final_SOC_Percent)
 ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
 ax1.set_xlabel("Time [sec]", fontsize="large")
 ax1.set_ylabel("SOC [%]", fontsize="large")
 ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
 plt.show()
 
-#############################################################################################
+
