@@ -4,6 +4,14 @@ from matplotlib import pyplot as plt
 from scipy.interpolate import LinearNDInterpolator
 from scipy.integrate import quad
 from scipy.interpolate import NearestNDInterpolator
+from turtle import color
+from fastsim import simdrive, vehicle, cycle
+import sys
+import os
+from pathlib import Path
+import time
+import pandas as pd
+import importlib
 
 ################### Efficiency map data points for IPM-synRM rear motor ####################
 RM_Speed_rpm = np.array([200, 100, 500, 12000, 3000, 1000, 2000, 6000, 10000, 4000,
@@ -354,7 +362,7 @@ Battery_Cap_A_h = 205
 Voltage_open_c_v = 400
 
 ###############################      SOC       ##############################
-soc = 1
+soc = 0.9
 battery_current_list = []
 dsoc_list = []
 soc_list = []
@@ -414,3 +422,28 @@ for i in soc_list:
 # plt.ylabel('SOC(%)')
 # plt.grid()
 # plt.show()
+
+###################################   Fastsim Model   ######################
+
+veh = vehicle.Vehicle(22)
+veh.Scenario_name
+
+cyc = cycle.Cycle("udds")
+sim = simdrive.SimDriveClassic(cyc, veh)
+sim.sim_drive()
+print("soc:", sim.soc)
+x = cyc.cycSecs
+y = (sim.soc)*100
+
+fig = plt.figure(figsize=(6, 4))
+ax1 = fig.add_subplot()
+
+ax1.plot(x, y)
+ax1.plot(x,soc_final_list)
+ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
+ax1.set_xlabel("Time [sec]", fontsize="large")
+ax1.set_ylabel("SOC [%]", fontsize="large")
+ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
+plt.show()
+
+#############################################################################################
