@@ -342,18 +342,11 @@ distance_mi = distance_m * 0.000621371
 
 #############################  Mechanical Parameters ###########################
 Vehicle_mass_kg = 2232
-Max_Genarator_EM_speed_rpm = 10000
-Max_traction_EM_speed_rpm = 13500
 Coeff_drag = 0.259
 Frontal_area_m2 = 2.34
 Coeff_rolling = 0.008
-Final_Drive_Ratio = 3.543
-Ring_Gear_Num_Teeth = 78
-Sun_Gear_Num_Teeth = 30
-Wheel_Radius_m = 0.317
 Air_Density = 1.2
 g = 9.81
-
 
 #############################  Battery Parameters ###########################
 R_int = 0.32
@@ -363,57 +356,55 @@ Voltage_open_c_v = 400
 ###############################      SOC       ##############################
 soc = 1
 
+power_battery = []
+battery_current_list = []
+dsoc_list = []
+soc_list = []
+f1_list = []
+f2_list = []
+soc_final_list = []
 
-class SOC:
-    power_battery = []
-    battery_current_list = []
-    dsoc_list = []
-    soc_list = []
-    f1_list = []
-    f2_list = []
-    soc_final_list = []
+for v in (udds_speed_ms):
+    f1 = (0.5)*(Coeff_drag)*(Air_Density)*(Frontal_area_m2) * \
+        (v**2)+(Coeff_rolling)*(Vehicle_mass_kg)*(g)
+    f1_list.append(f1)
 
-    for v in (udds_speed_ms):
-        f1 = (0.5)*(Coeff_drag)*(Air_Density)*(Frontal_area_m2) * \
-            (v**2)+(Coeff_rolling)*(Vehicle_mass_kg)*(g)
-        f1_list.append(f1)
+for i in (udds_accel_ms2):
+    f2 = (Vehicle_mass_kg * i)
+    # if f2 <= 0:
+    #     f2 = 0
+    f2_list.append(f2)
+power_battery = [x + y for (x, y) in zip(f1_list, f2_list)] * udds_speed_ms
+for w in (power_battery):
+    delta = (Voltage_open_c_v**2) - (4*w*R_int)
+    if delta == 0:
+        delta_sign = 0
+    if delta > 0:
+        delta_sign = 1
+    else:
+        delta_sign = -1
+    battery_current = (Voltage_open_c_v -
+                       (np.sqrt(delta_sign * delta)))/(2*R_int)
+    battery_current_list.append(battery_current)
 
-    for i in (udds_accel_ms2):
-        f2 = (Vehicle_mass_kg * i)
-        if f2 <= 0:
-            f2 = 0
-        f2_list.append(f2)
-    power_battery = [x + y for (x, y) in zip(f1_list, f2_list)] * udds_speed_ms
-    #power_battery = F_prob * udds_speed_ms
-    for w in (power_battery):
-        delta = (Voltage_open_c_v**2) - (4*w*R_int)
-        if delta == 0:
-            delta_sign = 0
-        if delta > 0:
-            delta_sign = 1
-        else:
-            delta_sign = -1
-        battery_current = (Voltage_open_c_v -
-                           (np.sqrt(delta_sign * delta)))/(2*R_int)
-        battery_current_list.append(battery_current)
+for i in (battery_current_list):
+    dsoc = i*(1/3600)*(-1/Battery_Cap_A_h)
+    dsoc_list.append(dsoc)
 
-    for i in (battery_current_list):
-        dsoc = i*(1/3600)*(-1/Battery_Cap_A_h)
-        dsoc_list.append(dsoc)
+for dsoc in (dsoc_list):
+    soc = soc + dsoc
+    if soc <= 0.1:
+        soc = 0
+    if soc > 1:
+        soc = 1
+    soc_list.append(soc)
+for i in soc_list:
+    soc_final = i * 100
+    soc_final_list.append(soc_final)
 
-    for dsoc in (dsoc_list):
-        soc = soc + dsoc
-        if soc <= 0.1:
-            soc = 0
-        if soc > 1:
-            soc = 1
-        soc_list.append(soc)
-    for i in soc_list:
-        soc_final = i * 100
-        soc_final_list.append(soc_final)
-    # plt.plot(udds_time_s, soc_final_list)
-    # plt.xlabel('Time Cycle(s)')
-    # plt.ylabel('SOC(%)')
-    # #plt.title('SOC(%) VS Time(s) - UDDS Drive Cycle')
-    # plt.grid()
-    # plt.show()
+# plt.plot(udds_time_s, soc_final_list)
+# plt.xlabel('Time Cycle(s)')
+# plt.ylabel('SOC(%)')
+# #plt.title('SOC(%) VS Time(s) - UDDS Drive Cycle')
+# plt.grid()
+# plt.show()
