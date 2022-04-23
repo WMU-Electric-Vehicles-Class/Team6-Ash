@@ -114,6 +114,13 @@ Motor_eff_rear_percent = RM_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
 Motor_eff_rear = Motor_eff_rear_percent/100
 # print(Motor_eff_rear)
 
+############## Interpolating Motor Efficiency_IAC Induction front motor #######################
+AC_Eff_interpol = NearestNDInterpolator(
+    (AC_Speed_rpm, AC_Torque_Nm), AC_efficiency)
+Motor_eff_front_percent = AC_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
+Motor_eff_front = Motor_eff_front_percent/100
+# print(Motor_eff_front)
+
 ############## Battery Power_Input Power #######################
 Pbatt_kW = Pmotor_kW/Motor_eff_rear
 Pbatt_W = Pbatt_kW*1000
@@ -185,9 +192,12 @@ class Battery:
             #     f2 = 0
             f2_list.append(f2)
         F_prob = [x + y for (x, y) in zip(f1_list, f2_list)]
-        battery_power = F_prob * self.speed
-        Real_power_battery = battery_power * Motor_eff_rear
-        delta = (self.Voltage_open_c_v**2) - (4*Real_power_battery*self.R_int)
+        Power_vehicle = F_prob * self.speed
+        Power_axle = Power_vehicle/2
+        Pbatt_front_motor = Power_axle/Motor_eff_front
+        Pbatt_rear_motor = Power_axle/Motor_eff_rear
+        Power_battery = Pbatt_front_motor + Pbatt_rear_motor
+        delta = (self.Voltage_open_c_v**2) - (4*Power_battery*self.R_int)
         b_current = (self.Voltage_open_c_v -
                      (np.sqrt(abs(delta))))/(2*self.R_int)
         dsoc = b_current*(1/3600)*(-1/self.Battery_Cap_A_h)
