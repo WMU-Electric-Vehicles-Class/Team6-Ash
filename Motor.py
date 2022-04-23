@@ -12,6 +12,22 @@ from pathlib import Path
 import time
 import pandas as pd
 import importlib
+##################### Vehicle parameters  ##############################
+
+empty_vehicle_weight_kg = 2232
+g = 9.81
+Crr = 0.015
+Cd = 0.28
+Air_Density = 1.2
+Vehicle_Height_m = 1.443
+Vehicle_Width_m = 1.849
+wheel_radius_m = .2286
+gear_ratio = 9.036
+Internal_resistance= 0.320
+Frontal_area = 2.34
+Air_Density = 1.2
+Battery_Cap_A_h = 205
+Voltage_open_c_v = 400
 
 ################ UDDS Drive Cycle  ###################################
 udds = np.loadtxt('uddscol_.txt', dtype=int)
@@ -56,25 +72,14 @@ plt.ylabel('Motor Torque (Nm)')
 plt.title('Efficiency Map for AC Induction Motor')
 plt.show()
 
-
-##################### Vehicle parameters  ##############################
-empty_vehicle_weight_kg = 2232
-g = 9.81
-
 ###################  Force due to mass of the vehicle (Fm) in Newton ########################
 Fm = empty_vehicle_weight_kg*udds_accel_ms2
 
 # Force due to Rolling Resistance (Frr) in Newton
-# Crr = Rolling Resistance Coefficient
-Crr = 0.015  # Assumed from example probelm
 Frr = Crr*empty_vehicle_weight_kg*g
 
 # Aerodynamic force (Fd) in Newton
 # Cd=Drag Coefficient
-Cd = 0.28
-Air_Density = 1.2
-Vehicle_Height_m = 1.443
-Vehicle_Width_m = 1.849
 Vehicle_Front_Area_m2 = Vehicle_Height_m*Vehicle_Width_m
 Fd = 0.5*Cd*Air_Density*Vehicle_Front_Area_m2*udds_speed_ms**2
 
@@ -84,9 +89,6 @@ Fprop = Fd+Frr+Fm
 # Force in each axle (Fw) in Newton
 Faxle = Fprop/2
 
-# Wheel parameters with 18" diameter
-wheel_radius_m = .2286
-
 ################## torque per wheel in Nm ###########################
 wheel_torque_Nm = Faxle*wheel_radius_m
 
@@ -95,7 +97,7 @@ angular_speed_rads = (udds_speed_ms)/wheel_radius_m
 wheel_rpm = angular_speed_rads*(60/2*math.pi)
 
 ############### motor angular velocity from axle 9:1 ratio, applies to both motors  #######################
-gear_ratio = 9.036
+
 motor_rpm = wheel_rpm*gear_ratio
 motor_torque_Nm = wheel_torque_Nm/gear_ratio
 
@@ -119,73 +121,12 @@ Motor_eff_rear = Motor_eff_rear_percent/100
 # plt.plot(motor_rpm, Pmotor_kW)
 # plt.plot(motor_rpm, Pbatt_kW)
 # plt.show()
-###################### Battery Parameters #################################
-
-battery_Voltage_max = 400
-battery_Voltage = 360
-SOC = 1.0
-SOC_min = 0.1
-Internal_resistance = 0.320
-max_Energy_Capacity_kw = 82
-min_Energy_Capacity_kw = 7
-SOC_min = min_Energy_Capacity_kw/max_Energy_Capacity_kw
-Ctb = 82000
-CD = 0.28
-RO = 1.19
-A = 2.34
-CRR = 0.015
-Rbi = 0.320
-M = 2232
-g = 9.81
-SOC_in = 1
-Pb_list = []
-I0_list = []
-SOC_list = []
-t0 = 0
-t1 = 1369
-
-
-# #############   Battery Power   #########
-
-for v in (udds_speed_ms):
-    Pb = ((0.5)*(CD)*(RO)*(A)*(v**2)+(CRR)*(M)*(g))*v
-    Pb_list.append(Pb)
-
-
-# #############   Battery Current   #########
-for w in (Pb_list):
-    I0 = w/360
-    I0_list.append(I0)
-
-for I in (I0_list):
-    SOC = (SOC - ((I/Ctb)*(0.5)*((t1**2)-(t0**2))))
-    SOC_list.append(SOC)
-
 
 # #########################   SOC    ######################################
 
-#dSOC =1
-#SOC_list = []
-#I1_list =[]
-# for power in (Pb_list):
-    #sq = ((battery_Voltage_max)-(abs(battery_Voltage_max**2)-4*Rbi*power)**0.5)
-    # if sq < 0 :
-    #     sq*(-1)
-    #     continue
-    #I1 = sq/(2*Rbi)
-    # I1_list.append(sq)
-
-    # for I in (I1_list):
-    #dSOC = -(I/3600)/Ctb
-    #SOC = SOC + (I/Ctb)*dSOC
-    # if SOC < SOC_min:
-    #     SOC=0
-    # else:
-    # SOC_list.append(SOC)
-
 battery_capacity_Ah = 33
 battery_capacity_As = 33*3600
-open_circuit_voltage = battery_Voltage
+open_circuit_voltage = Voltage_open_c_v
 SOC = [1]  # initialize SOC at 100%
 for i in range(1, len(udds_time_s)):
     SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs(
@@ -219,15 +160,15 @@ udds_speed_ms_under_limited=np.array(udds_speed_ms_l)
 
 class Battery:
     def __init__(self):
-        self.v_mass = 2232
-        self.Coeff_drag = 0.259
-        self.Frontal_area = 2.34
-        self.Coeff_rolling = 0.008
-        self.Air_Density = 1.2
-        self.R_int = 0.32
-        self.Battery_Cap_A_h = 205
-        self.Voltage_open_c_v = 400
-        self.g = 9.81
+        self.v_mass = empty_vehicle_weight_kg
+        self.Coeff_drag = Cd
+        self.Frontal_area = Frontal_area
+        self.Coeff_rolling = Crr
+        self.Air_Density = Air_Density
+        self.R_int = Internal_resistance
+        self.Battery_Cap_A_h = Battery_Cap_A_h
+        self.Voltage_open_c_v = Voltage_open_c_v
+        self.g = g
         self.speed = udds_speed_ms
         self.acc = udds_accel_ms2
 
