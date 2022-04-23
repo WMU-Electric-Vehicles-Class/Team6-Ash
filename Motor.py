@@ -119,7 +119,85 @@ Motor_eff_rear = Motor_eff_rear_percent/100
 # plt.plot(motor_rpm, Pmotor_kW)
 # plt.plot(motor_rpm, Pbatt_kW)
 # plt.show()
+###################### Battery Parameters #################################
 
+battery_Voltage_max = 400
+battery_Voltage = 360
+SOC = 1.0
+SOC_min = 0.1
+Internal_resistance = 0.320
+max_Energy_Capacity_kw = 82
+min_Energy_Capacity_kw = 7
+SOC_min = min_Energy_Capacity_kw/max_Energy_Capacity_kw
+Ctb = 82000
+CD = 0.28
+RO = 1.19
+A = 2.34
+CRR = 0.015
+Rbi = 0.320
+M = 2232
+g = 9.81
+SOC_in = 1
+Pb_list = []
+I0_list = []
+SOC_list = []
+t0 = 0
+t1 = 1369
+
+
+# #############   Battery Power   #########
+
+for v in (udds_speed_ms):
+    Pb = ((0.5)*(CD)*(RO)*(A)*(v**2)+(CRR)*(M)*(g))*v
+    Pb_list.append(Pb)
+
+
+# #############   Battery Current   #########
+for w in (Pb_list):
+    I0 = w/360
+    I0_list.append(I0)
+
+for I in (I0_list):
+    SOC = (SOC - ((I/Ctb)*(0.5)*((t1**2)-(t0**2))))
+    SOC_list.append(SOC)
+
+
+# #########################   SOC    ######################################
+
+#dSOC =1
+#SOC_list = []
+#I1_list =[]
+# for power in (Pb_list):
+    #sq = ((battery_Voltage_max)-(abs(battery_Voltage_max**2)-4*Rbi*power)**0.5)
+    # if sq < 0 :
+    #     sq*(-1)
+    #     continue
+    #I1 = sq/(2*Rbi)
+    # I1_list.append(sq)
+
+    # for I in (I1_list):
+    #dSOC = -(I/3600)/Ctb
+    #SOC = SOC + (I/Ctb)*dSOC
+    # if SOC < SOC_min:
+    #     SOC=0
+    # else:
+    # SOC_list.append(SOC)
+
+battery_capacity_Ah = 33
+battery_capacity_As = 33*3600
+open_circuit_voltage = battery_Voltage
+SOC = [1]  # initialize SOC at 100%
+for i in range(1, len(udds_time_s)):
+    SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs(
+        (open_circuit_voltage**2)-4*Internal_resistance*Pbatt_W[i])))/(2*Internal_resistance*battery_capacity_As))
+SOC_percent = [i * 100 for i in SOC]
+
+plt.plot(udds_time_s, SOC_percent)
+plt.title('SOC(%) for UDDS')
+plt.xlabel('time')
+plt.ylabel('SOC(%)')
+plt.grid()
+#plt.show()
 
 
 ####################### SOC
