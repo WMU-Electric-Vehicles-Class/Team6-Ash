@@ -5,7 +5,7 @@ from scipy.interpolate import LinearNDInterpolator
 from scipy.integrate import quad
 from scipy.interpolate import NearestNDInterpolator
 from turtle import color
-from fastsim import simdrive, vehicle, cycle
+# from fastsim import simdrive, vehicle, cycle
 import sys
 import os
 from pathlib import Path
@@ -224,17 +224,17 @@ ss = Battery.D_soc(s1)
 Final_SOC_Percent = Battery.SOC(ss)
 
 plt.plot(udds_time_s, Final_SOC_Percent)
-plt.xlabel('Time Cycle(s)')
-plt.ylabel('SOC(%)')
+plt.xlabel('Time Cycle (s)')
+plt.ylabel('SOC (%)')
 plt.grid()
 plt.show()
 
 ##################################################### Normal speed vs limited speed   ###########################
 
 plt.plot(udds_time_s, udds_speed_mph, udds_speed_mph_limited)
-plt.xlabel('Time Cycle(s)')
-plt.ylabel('Speed ( mile/h)')
-plt.legend(["UDDS velocity", "UDDS velocity for the speed above 15 mile/h"])
+plt.xlabel('Time Cycle (s)')
+plt.ylabel('Speed (mph)')
+plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph"])
 plt.grid()
 plt.show()
 
@@ -244,10 +244,10 @@ sp.speed=udds_speed_ms_limited
 sp1 = Battery.D_soc(sp)
 SOC_speed_limit = Battery.SOC(sp1)
 
-plt.plot(udds_time_s, SOC_speed_limit, Final_SOC_Percent)
-plt.xlabel('Time Cycle(s)')
-plt.ylabel('SOC(%)')
-plt.legend(["velocity limited to above 15 mile/h", "For all velocity in UDDS Cycle", ])
+plt.plot(udds_time_s, Final_SOC_Percent, SOC_speed_limit)
+plt.xlabel('Time Cycle (s)')
+plt.ylabel('SOC (%)')
+plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph", ])
 plt.grid()
 plt.show()
 
@@ -264,38 +264,38 @@ Final_SOC_more_weight = Battery.SOC(s3d)
 
 plt.plot(udds_time_s, Final_SOC_Percent, Final_SOC_less_weight)
 plt.plot(udds_time_s, Final_SOC_more_weight)
-plt.xlabel('Time Cycle(s)')
-plt.ylabel('SOC(%)')
-plt.legend(["Actual weight", "20 % lighter", "20 % Heavier"])
+plt.xlabel('Time Cycle (s)')
+plt.ylabel('SOC (%)')
+plt.legend(["Actual Weight", "20% Lighter", "20% Heavier"])
 plt.grid()
 plt.show()
 
 ######################################## SOC vs Distance  ################################
 plt.plot(Distance_mi, Final_SOC_Percent)
-plt.title('SOC(%) for UDDS')
-plt.xlabel('Distance in miles')
-plt.ylabel('SOC(%)')
+plt.title('SOC (%) for UDDS')
+plt.xlabel('Distance (mi)')
+plt.ylabel('SOC (%)')
 plt.grid()
 plt.show()
 
 ###################################   Fastsim MOdel   ######################
 
-veh = vehicle.Vehicle(22)
-veh.Scenario_name
+# veh = vehicle.Vehicle(22)
+# veh.Scenario_name
 
-cyc = cycle.Cycle("udds")
-sim = simdrive.SimDriveClassic(cyc, veh)
-sim.sim_drive()
-print("soc:", sim.soc)
-x = cyc.cycSecs
-y = (sim.soc)*100
+# cyc = cycle.Cycle("udds")
+# sim = simdrive.SimDriveClassic(cyc, veh)
+# sim.sim_drive()
+# print("soc:", sim.soc)
+# x = cyc.cycSecs
+# y = (sim.soc)*100
 
-fig = plt.figure(figsize=(6, 4))
-ax1 = fig.add_subplot()
-ax1.plot(x, y)
-ax1.plot(x,Final_SOC_Percent)
-ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
-ax1.set_xlabel("Time [sec]", fontsize="large")
-ax1.set_ylabel("SOC [%]", fontsize="large")
-ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
-plt.show()
+# fig = plt.figure(figsize=(6, 4))
+# ax1 = fig.add_subplot()
+# ax1.plot(x, y)
+# ax1.plot(x,Final_SOC_Percent)
+# ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
+# ax1.set_xlabel("Time [sec]", fontsize="large")
+# ax1.set_ylabel("SOC [%]", fontsize="large")
+# ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
+# plt.show()
