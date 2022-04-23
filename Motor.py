@@ -123,7 +123,7 @@ Motor_eff_front = Motor_eff_front_percent/100
 
 ############## Battery Power_Input Power #######################
 Pbatt_kW = Pmotor_kW/Motor_eff_rear
-Pbatt_W = Pbatt_kW*1000
+# Pbatt_W = Pbatt_kW*1000
 
 # plt.plot(motor_rpm, Pmotor_kW)
 # plt.plot(motor_rpm, Pbatt_kW)
@@ -137,15 +137,15 @@ open_circuit_voltage = Voltage_open_c_v
 SOC = [1]  # initialize SOC at 100%
 for i in range(1, len(udds_time_s)):
     SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs(
-        (open_circuit_voltage**2)-4*Internal_resistance*Pbatt_W[i])))/(2*Internal_resistance*battery_capacity_As))
+        (open_circuit_voltage**2)-4*Internal_resistance*Pbatt_kW[i])))/(2*Internal_resistance*battery_capacity_As))
 SOC_percent = [i * 100 for i in SOC]
 
 plt.plot(udds_time_s, SOC_percent)
 plt.title('SOC(%) for UDDS')
-plt.xlabel('time')
+plt.xlabel('Time')
 plt.ylabel('SOC(%)')
 plt.grid()
-#plt.show()
+plt.show()
 
 
 ####################### SOC
