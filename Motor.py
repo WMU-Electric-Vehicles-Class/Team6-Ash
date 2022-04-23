@@ -5,7 +5,7 @@ from scipy.interpolate import LinearNDInterpolator
 from scipy.integrate import quad
 from scipy.interpolate import NearestNDInterpolator
 from turtle import color
-from fastsim import simdrive, vehicle, cycle
+# from fastsim import simdrive, vehicle, cycle
 import sys
 import os
 from pathlib import Path
@@ -30,19 +30,28 @@ plt.title('Efficiency Map for IPM-synRM')
 plt.show()
 
 ########################### Efficiency map data points for AC Induction front motor #####################
-AC_Speed_rpm = np.array([250, 1750, 500, 1500, 1000, 750, 600, 1750, 750, 1750, 1500, 1000, 1000, 1000, 1750, 1500,
-                        1250, 1500, 1750, 2500, 4750, 400, 100, 100, 4000, 350, 2750, 2500, 2500, 500, 250, 250, 750, 1000, 750, 500])
-AC_Torque_Nm = np.array([250, 570, 63, 500, 380, 200, 126, 450, 189.9, 380, 430, 316, 250, 63, 316,
-                        250, 63, 63, 60, 60, 50, 50, 60, 400, 70, 80, 150, 220, 70, 500, 200, 570, 570, 500, 430, 400])
-AC_efficiency = np.array([70, 82, 85, 85, 85, 86, 87, 87, 89, 89, 89, 89, 90, 91, 91,
-                         91, 92, 92, 93, 94, 92, 93, 20, 50, 92, 92, 92, 92, 94, 72, 72, 50, 72, 78, 80, 87])
+# AC_Speed_rpm = np.array([250, 1750, 500, 1500, 1000, 750, 600, 1750, 750, 1750, 1500, 1000, 1000, 1000, 1750, 1500,
+#                         1250, 1500, 1750, 2500, 4750, 400, 100, 100, 4000, 350, 2750, 2500, 2500, 500, 250, 250, 750, 1000, 750, 500])
+# AC_Torque_Nm = np.array([250, 570, 63, 500, 380, 200, 126, 450, 189.9, 380, 430, 316, 250, 63, 316,
+#                         250, 63, 63, 60, 60, 50, 50, 60, 400, 70, 80, 150, 220, 70, 500, 200, 570, 570, 500, 430, 400])
+# AC_efficiency = np.array([70, 82, 85, 85, 85, 86, 87, 87, 89, 89, 89, 89, 90, 91, 91,
+#                          91, 92, 92, 93, 94, 92, 93, 20, 50, 92, 92, 92, 92, 94, 72, 72, 50, 72, 78, 80, 87])
 
-# plt.tricontourf(list(AC_Speed_rpm),list(AC_Torque_Nm),list(AC_efficiency), levels=[60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,93,94,96,98])
-# plt.colorbar()
-# plt.xlabel('Motor Speed (rpm)')
-# plt.ylabel('Motor Torque (Nm)')
-# plt.title('Efficiency Map for AC Induction Motor')
-# #plt.show()
+AC_Speed_rpm = np.array([50, 300, 500, 500, 1000, 1000, 1500, 2000, 1000, 1500, 2000, 3000, 2000, 2500, 3000, 2000, 2500, 3000, 4000, 
+                        4000, 3000, 3500, 4000, 5000, 8000, 10000, 12000, 4000, 5000, 6000, 8000, 10000, 12000, 10000, 12000, 
+                        7000, 8000, 10000, 12000, 8000, 10000, 12000, 8000, 10000, 12000]) 
+AC_Torque_Nm = np.array([250, 0, 50, 150, 300, 75, 250, 300, 50, 100, 150, 300, 75, 150, 250, 25, 75, 150, 250, 250, 50, 
+                        125, 150, 250, 200, 140, 125, 50, 100, 200, 25, 25, 25, 125, 125, 125, 150, 100, 100,
+                        50, 50, 50, 100, 75, 60])
+AC_efficiency = np.array([20, 0, 82, 82, 82, 87, 86, 88, 88, 90, 90, 90, 91, 91, 91, 92, 92, 92, 92, 92, 93, 93, 93, 93, 93, 
+                        93, 93, 94, 94, 94, 94, 94, 94, 94, 94, 95, 95, 95, 95, 95, 95, 95, 96, 96, 96])
+
+plt.tricontourf(list(AC_Speed_rpm),list(AC_Torque_Nm),list(AC_efficiency), levels=[60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,93,94,96,98])
+plt.colorbar()
+plt.xlabel('Motor Speed (rpm)')
+plt.ylabel('Motor Torque (Nm)')
+plt.title('Efficiency Map for AC Induction Motor')
+plt.show()
 
 ################ UDDS Drive Cycle  ###################################
 udds = np.loadtxt('uddscol_.txt', dtype=int)
@@ -218,14 +227,14 @@ plt.title('SOC(%) for UDDS')
 plt.xlabel('time')
 plt.ylabel('SOC(%)')
 plt.grid()
-plt.show()
+#plt.show()
 
 plt.plot(Distance_mi, SOC_percent)
 plt.title('SOC(%) for UDDS')
 plt.xlabel('Distance in miles')
 plt.ylabel('SOC(%)')
 plt.grid()
-plt.show()
+#plt.show()
 
 # ##########################   Argonne  Benze ###################################
 
@@ -412,7 +421,7 @@ plt.plot(udds_time_s, Final_SOC_Percent)
 plt.xlabel('Time Cycle(s)')
 plt.ylabel('SOC(%)')
 plt.grid()
-plt.show()
+#plt.show()
 
 ##################################################### Normal speed vs limited speed   ###########################
 
@@ -421,7 +430,7 @@ plt.xlabel('Time Cycle(s)')
 plt.ylabel('SOC(%)')
 plt.legend(["UDDS velocity", "UDDS velocity that limited to under 10 m/s"])
 plt.grid()
-plt.show()
+#plt.show()
 
 ######################################################   SOC vs the speed limit   ###########################
 sp = Battery()
@@ -434,7 +443,7 @@ plt.xlabel('Time Cycle(s)')
 plt.ylabel('SOC(%)')
 plt.legend(["velocity limited to under 10 m/s", "For all velocity", ])
 plt.grid()
-plt.show()
+#plt.show()
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
@@ -453,7 +462,7 @@ plt.xlabel('Time Cycle(s)')
 plt.ylabel('SOC(%)')
 plt.legend(["Actual weight", "20 % lighter", "20 % Heavier"])
 plt.grid()
-plt.show()
+#plt.show()
 
 ######################################## SOC vs Distance  ################################
 plt.plot(Distance_mi, Final_SOC_Percent)
@@ -461,28 +470,28 @@ plt.title('SOC(%) for UDDS')
 plt.xlabel('Distance in miles')
 plt.ylabel('SOC(%)')
 plt.grid()
-plt.show()
+#plt.show()
 
 ###################################   Fastsim MOdel   ######################
 
-veh = vehicle.Vehicle(22)
-veh.Scenario_name
+# veh = vehicle.Vehicle(22)
+# veh.Scenario_name
 
-cyc = cycle.Cycle("udds")
-sim = simdrive.SimDriveClassic(cyc, veh)
-sim.sim_drive()
-print("soc:", sim.soc)
-x = cyc.cycSecs
-y = (sim.soc)*100
+# cyc = cycle.Cycle("udds")
+# sim = simdrive.SimDriveClassic(cyc, veh)
+# sim.sim_drive()
+# print("soc:", sim.soc)
+# x = cyc.cycSecs
+# y = (sim.soc)*100
 
-fig = plt.figure(figsize=(6, 4))
-ax1 = fig.add_subplot()
-ax1.plot(x, y)
-ax1.plot(x,Final_SOC_Percent)
-ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
-ax1.set_xlabel("Time [sec]", fontsize="large")
-ax1.set_ylabel("SOC [%]", fontsize="large")
-ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
-plt.show()
+# fig = plt.figure(figsize=(6, 4))
+# ax1 = fig.add_subplot()
+# ax1.plot(x, y)
+# ax1.plot(x,Final_SOC_Percent)
+# ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
+# ax1.set_xlabel("Time [sec]", fontsize="large")
+# ax1.set_ylabel("SOC [%]", fontsize="large")
+# ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
+# plt.show()
 
 
