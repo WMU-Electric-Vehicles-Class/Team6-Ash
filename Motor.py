@@ -115,8 +115,8 @@ Motor_eff_rear = Motor_eff_rear_percent/100
 # print(Motor_eff_rear)
 
 ############## Battery Power_Input Power #######################
-# Pbatt_kW = Pmotor_kW/Motor_eff_rear
-# Pbatt_W = Pbatt_kW*1000
+Pbatt_kW = Pmotor_kW/Motor_eff_rear
+Pbatt_W = Pbatt_kW*1000
 
 # plt.plot(motor_rpm, Pmotor_kW)
 # plt.plot(motor_rpm, Pbatt_kW)
