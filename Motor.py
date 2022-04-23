@@ -70,7 +70,7 @@ plt.colorbar()
 plt.xlabel('Motor Speed (rpm)')
 plt.ylabel('Motor Torque (Nm)')
 plt.title('Efficiency Map for AC Induction Motor')
-plt.show()
+#plt.show()
 
 ###################  Force due to mass of the vehicle (Fm) in Newton ########################
 Fm = empty_vehicle_weight_kg*udds_accel_ms2
@@ -131,21 +131,21 @@ Pbatt_kW = Pmotor_kW/Motor_eff_rear
 
 # #########################   SOC    ######################################
 
-battery_capacity_Ah = 33
-battery_capacity_As = 33*3600
-open_circuit_voltage = Voltage_open_c_v
-SOC = [1]  # initialize SOC at 100%
-for i in range(1, len(udds_time_s)):
-    SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs(
-        (open_circuit_voltage**2)-4*Internal_resistance*Pbatt_kW[i])))/(2*Internal_resistance*battery_capacity_As))
-SOC_percent = [i * 100 for i in SOC]
+# battery_capacity_Ah = 33
+# battery_capacity_As = 33*3600
+# open_circuit_voltage = Voltage_open_c_v
+# SOC = [1]  # initialize SOC at 100%
+# for i in range(1, len(udds_time_s)):
+#     SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs(
+#         (open_circuit_voltage**2)-4*Internal_resistance*Pbatt_kW[i])))/(2*Internal_resistance*battery_capacity_As))
+# SOC_percent = [i * 100 for i in SOC]
 
-plt.plot(udds_time_s, SOC_percent)
-plt.title('SOC(%) for UDDS')
-plt.xlabel('Time')
-plt.ylabel('SOC(%)')
-plt.grid()
-plt.show()
+# plt.plot(udds_time_s, SOC_percent)
+# plt.title('SOC(%) for UDDS')
+# plt.xlabel('Time')
+# plt.ylabel('SOC(%)')
+# plt.grid()
+#plt.show()
 
 
 ####################### SOC
@@ -155,15 +155,15 @@ plt.show()
 ####################### Compare SOC with the speed limit
 ####################### Compare SOC with Fastsim Model
 
-Speed_limit = 8.94  # 8.94 m/s = 20 mile/hour
+Speed_limit = 15  # 15 mile/hr
 
-udds_speed_ms_l =[]
-for i in udds_speed_ms:
-    if i>Speed_limit:
+udds_speed_mph_l =[]
+for i in udds_speed_mph:
+    if i<Speed_limit:
         i = Speed_limit
-    udds_speed_ms_l.append(i)
-udds_speed_ms_under_limited=np.array(udds_speed_ms_l)
-
+    udds_speed_mph_l.append(i)
+udds_speed_mph_limited=np.array(udds_speed_mph_l)
+udds_speed_ms_limited= udds_speed_mph_limited **.44704
 
 class Battery:
     def __init__(self):
@@ -231,23 +231,23 @@ plt.show()
 
 ##################################################### Normal speed vs limited speed   ###########################
 
-plt.plot(udds_time_s, udds_speed_ms, udds_speed_ms_under_limited)
+plt.plot(udds_time_s, udds_speed_mph, udds_speed_mph_limited)
 plt.xlabel('Time Cycle(s)')
-plt.ylabel('SOC(%)')
-plt.legend(["UDDS velocity", "UDDS velocity that limited to under 10 m/s"])
+plt.ylabel('Speed ( mile/h)')
+plt.legend(["UDDS velocity", "UDDS velocity for the speed above 15 mile/h"])
 plt.grid()
 plt.show()
 
 ######################################################   SOC vs the speed limit   ###########################
 sp = Battery()
-sp.speed=udds_speed_ms_under_limited
+sp.speed=udds_speed_ms_limited
 sp1 = Battery.D_soc(sp)
 SOC_speed_limit = Battery.SOC(sp1)
 
 plt.plot(udds_time_s, SOC_speed_limit, Final_SOC_Percent)
 plt.xlabel('Time Cycle(s)')
 plt.ylabel('SOC(%)')
-plt.legend(["velocity limited to under 10 m/s", "For all velocity", ])
+plt.legend(["velocity limited to above 15 mile/h", "For all velocity in UDDS Cycle", ])
 plt.grid()
 plt.show()
 
