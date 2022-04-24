@@ -275,17 +275,22 @@ print(len(SOC_speed_limit))
 print(SOC_speed_limit[1369], Final_SOC_Percent_UDDS[1369])
 
 ######################################################   SOC vs Smooth Hwy   ###########################
-# sp = Battery()
-# sp.speed=smooth_hwy_mph
-# sp1 = Battery.D_soc(sp)
-# SOC_smooth_hwy = Battery.SOC(sp1)
+c1=Battery()
+c1.speed=hwy_speed_ms
+cc=Battery.D_soc(c1)
+Final_SOC_Percent_Hwy=Battery.SOC(cc)
 
-# plt.plot(hwy_time_s, Final_SOC_Percent_UDDS, SOC_smooth_hwy)
-# plt.xlabel('Time (s)')
-# plt.ylabel('Velocity (mph)')
-# plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
-# plt.grid()
-# plt.show()
+c2=Battery()
+c2.speed=smooth_hwy_ms
+ccc=Battery.D_soc(c2)
+Final_SOC_Percent_Hwy_smooth=Battery.SOC(ccc)
+
+plt.plot(hwy_time_s, Final_SOC_Percent_Hwy, Final_SOC_Percent_Hwy_smooth)
+plt.xlabel('Time (s)')
+plt.ylabel('Velocity (mph)')
+plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
+plt.grid()
+plt.show()
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
