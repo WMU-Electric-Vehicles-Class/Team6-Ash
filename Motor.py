@@ -50,7 +50,7 @@ distance_m_hwy = np.cumsum(hwy_speed_ms)
 Distance_mi_hwy = distance_m_hwy/1609
 
 ########## Smooth HWY ################
-smooth_hwy_ms=savgol_filter(hwy_speed_ms, 51, 3)
+smooth_hwy_ms=savgol_filter(hwy_speed_ms, 201, 3)
 smooth_hwy_mph= smooth_hwy_ms/.44704
 plt.plot(hwy_time_s,hwy_speed_mph)
 plt.plot(hwy_time_s,smooth_hwy_mph)
@@ -320,6 +320,8 @@ plt.ylabel('SOC (%)')
 plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
 plt.grid()
 plt.show()
+
+print(Final_SOC_Percent_Hwy[len(Final_SOC_Percent_Hwy)-1], Final_SOC_Percent_Hwy_smooth[len(Final_SOC_Percent_Hwy_smooth)-1])
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
