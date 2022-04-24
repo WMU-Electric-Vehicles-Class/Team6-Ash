@@ -219,13 +219,18 @@ class Battery:
         F_prob = [x + y for (x, y) in zip(f1_list, f2_list)]
         Power_vehicle = F_prob * self.speed
         Power_axle = Power_vehicle/2
-        wheel_torque_Nm = F_prob*.5*self.radius         #PROBLEM LINE
+        #wheel_torque_Nm = F_prob*(self.radius) 
+
+        Wheel_torque_list =[]
+        for i in F_prob:
+            Wheel_torque = i/2 * self.radius
+            Wheel_torque_list.append(Wheel_torque)
 
         angular_speed_rads = (self.speed)/self.radius
         wheel_rpm = angular_speed_rads*(60/2*np.pi)
         
-        motor_rpm = wheel_rpm*gear_ratio
-        motor_torque_Nm = wheel_torque_Nm/gear_ratio 
+        motor_rpm = wheel_rpm*self.gear_ratio
+        motor_torque_Nm = Wheel_torque/self.gear_ratio 
 
         RM_Eff_interpol = NearestNDInterpolator(
             (RM_Speed_rpm, RM_Torque_Nm), RM_efficiency)
