@@ -29,6 +29,7 @@ Frontal_area = 2.34
 Air_Density = 1.2
 Battery_Cap_A_h = 205
 Voltage_open_c_v = 400
+regenerative_status = 1  # 0 = Off, 1 = On
 
 ################ UDDS Drive Cycle  ###################################
 udds = np.loadtxt('uddscol_.txt', dtype=int)
@@ -198,9 +199,10 @@ class Battery:
         self.g = g
         self.speed = udds_speed_ms
         self.acc = udds_accel_ms2
-
         self.radius= wheel_radius_m
         self.gear_ratio=gear_ratio
+        self.reg = regenerative_status
+
 
     def D_soc(self):
         f1_list = []
@@ -211,26 +213,30 @@ class Battery:
             f1_list.append(f1)
         for i in (self.acc):
             f2 = (self.v_mass * i)
-            # if f2 <= 0:
-            #     f2 = 0
+            if f2 <= 0:
+                f2 = f2*self.reg
             f2_list.append(f2)
         F_prob = [x + y for (x, y) in zip(f1_list, f2_list)]
         Power_vehicle = F_prob * self.speed
         Power_axle = Power_vehicle/2
+        wheel_torque_Nm = Power_axle*self.radius
 
-        Motor_torque= ((F_prob/2)*self.radius)/self.gear_ratio
-        wheel_rpm= ((self.speed)/self.radius)*(60/2*math.pi)*self.gear_ratio
+        angular_speed_rads = (self.speed)/self.radius
+        wheel_rpm = angular_speed_rads*(60/2*np.pi)
         
+        motor_rpm = wheel_rpm*gear_ratio
+        motor_torque_Nm = wheel_torque_Nm/gear_ratio 
+
         RM_Eff_interpol = NearestNDInterpolator(
             (RM_Speed_rpm, RM_Torque_Nm), RM_efficiency)
-        Motor_eff_rear_percent = RM_Eff_interpol(abs(wheel_rpm), abs(Motor_torque))
+        Motor_eff_rear_percent = RM_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
         Motor_eff_rear = Motor_eff_rear_percent/100
 
         AC_Eff_interpol = NearestNDInterpolator(
-            (AC_Speed_rpm, AC_Torque_Nm), AC_efficiency)
-        Motor_eff_front_percent = AC_Eff_interpol(abs(wheel_rpm), abs(Motor_torque))
+           (AC_Speed_rpm, AC_Torque_Nm), AC_efficiency)
+        Motor_eff_front_percent = AC_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
         Motor_eff_front = Motor_eff_front_percent/100
-
+        
         Pbatt_front_motor = Power_axle/Motor_eff_front
         Pbatt_rear_motor = Power_axle/Motor_eff_rear
         Power_battery = Pbatt_front_motor + Pbatt_rear_motor
@@ -251,6 +257,7 @@ class Battery:
                 soc = 1
             soclist.append(soc*100)
         return (soclist)
+
 
 
 
