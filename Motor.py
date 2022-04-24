@@ -12,6 +12,7 @@ from pathlib import Path
 import time
 import pandas as pd
 import importlib
+from scipy.signal import savgol_filter
 ##################### Vehicle parameters  ##############################
 
 empty_vehicle_weight_kg = 2232
@@ -38,6 +39,25 @@ udds_accel_ms2 = np.diff(udds_speed_ms, prepend=0)
 distance_m_udd = np.cumsum(udds_speed_ms)
 Distance_mi = distance_m_udd/1609
 
+################# HWY Drive Cycle ####################################
+hwy = np.loadtxt('hwycol.txt', dtype=int)
+hwy_time_s = hwy[:, 0]
+hwy_speed_mph = hwy[:, 1]
+hwy_speed_ms = hwy_speed_mph*.44704
+hwy_accel_ms2 = np.diff(hwy_speed_ms, prepend=0)
+distance_m_hwy = np.cumsum(hwy_speed_ms)
+Distance_mi_hwy = distance_m_hwy/1609
+
+########## Smooth HWY ################
+smooth_hwy_ms=savgol_filter(hwy_speed_ms, 51, 3)
+smooth_hwy_mph= smooth_hwy_ms/.44704
+plt.plot(hwy_time_s,hwy_speed_mph)
+plt.plot(hwy_time_s,smooth_hwy_mph)
+plt.xlabel('Time (s)')
+plt.ylabel('Velocity (mph)')
+plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
+plt.show()
+
 ################### Efficiency map data points for IPM-synRM rear motor ####################
 RM_Speed_rpm = np.array([200, 100, 500, 12000, 3000, 1000, 2000, 6000, 10000, 4000,
                         2000, 10000, 8700, 2000, 2000, 4000, 8000, 1000, 6000, 4000, 4000, 6000, 5000, 3000])
@@ -46,13 +66,13 @@ RM_Torque_Nm = np.array([200, 230, 25, 5, 230, 50, 150, 100, 5,
 RM_efficiency = np.array([63, 63, 90, 93, 93, 94, 94, 94, 94,
                          95, 95, 95, 95, 95, 96, 96, 96, 96, 96, 96, 97, 97, 97, 97])
 
-plt.tricontourf(list(RM_Speed_rpm), list(RM_Torque_Nm), list(RM_efficiency), levels=[
-                60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 93, 94, 96, 98])
-plt.colorbar()
-plt.xlabel('Motor Speed (rpm)')
-plt.ylabel('Motor Torque (Nm)')
-plt.title('Efficiency Map for IPM-synRM')
-plt.show()
+# plt.tricontourf(list(RM_Speed_rpm), list(RM_Torque_Nm), list(RM_efficiency), levels=[
+#                 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 93, 94, 96, 98])
+# plt.colorbar()
+# plt.xlabel('Motor Speed (rpm)')
+# plt.ylabel('Motor Torque (Nm)')
+# plt.title('Efficiency Map for IPM-synRM')
+# plt.show()
 
 ########################### Efficiency map data points for AC Induction front motor #####################
 
@@ -70,7 +90,7 @@ plt.colorbar()
 plt.xlabel('Motor Speed (rpm)')
 plt.ylabel('Motor Torque (Nm)')
 plt.title('Efficiency Map for AC Induction Motor')
-#plt.show()
+plt.show()
 
 ###################  Force due to mass of the vehicle (Fm) in Newton ########################
 Fm = empty_vehicle_weight_kg*udds_accel_ms2
@@ -221,13 +241,13 @@ class Battery:
 ###################################################         SOC      #####################################
 s1 = Battery()
 ss = Battery.D_soc(s1)
-Final_SOC_Percent = Battery.SOC(ss)
+Final_SOC_Percent_UDDS = Battery.SOC(ss)
 
-plt.plot(udds_time_s, Final_SOC_Percent)
+plt.plot(udds_time_s, Final_SOC_Percent_UDDS)
 plt.xlabel('Time Cycle (s)')
 plt.ylabel('SOC (%)')
 plt.grid()
-plt.show()
+# plt.show()
 
 ##################################################### Normal speed vs limited speed   ###########################
 
@@ -236,7 +256,7 @@ plt.xlabel('Time Cycle (s)')
 plt.ylabel('Speed (mph)')
 plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph"])
 plt.grid()
-plt.show()
+# plt.show()
 
 ######################################################   SOC vs the speed limit   ###########################
 sp = Battery()
@@ -244,12 +264,28 @@ sp.speed=udds_speed_ms_limited
 sp1 = Battery.D_soc(sp)
 SOC_speed_limit = Battery.SOC(sp1)
 
-plt.plot(udds_time_s, Final_SOC_Percent, SOC_speed_limit)
+plt.plot(udds_time_s, Final_SOC_Percent_UDDS, SOC_speed_limit)
 plt.xlabel('Time Cycle (s)')
 plt.ylabel('SOC (%)')
 plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph", ])
 plt.grid()
-plt.show()
+# plt.show()
+
+print(len(SOC_speed_limit))
+print(SOC_speed_limit[1369], Final_SOC_Percent_UDDS[1369])
+
+######################################################   SOC vs Smooth Hwy   ###########################
+# sp = Battery()
+# sp.speed=smooth_hwy_mph
+# sp1 = Battery.D_soc(sp)
+# SOC_smooth_hwy = Battery.SOC(sp1)
+
+# plt.plot(hwy_time_s, Final_SOC_Percent_UDDS, SOC_smooth_hwy)
+# plt.xlabel('Time (s)')
+# plt.ylabel('Velocity (mph)')
+# plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
+# plt.grid()
+# plt.show()
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
@@ -262,21 +298,21 @@ s3.v_mass = 2678.4   # 20 percent more
 s3d = Battery.D_soc(s3)
 Final_SOC_more_weight = Battery.SOC(s3d)
 
-plt.plot(udds_time_s, Final_SOC_Percent, Final_SOC_less_weight)
+plt.plot(udds_time_s, Final_SOC_Percent_UDDS, Final_SOC_less_weight)
 plt.plot(udds_time_s, Final_SOC_more_weight)
 plt.xlabel('Time Cycle (s)')
 plt.ylabel('SOC (%)')
 plt.legend(["Actual Weight", "20% Lighter", "20% Heavier"])
 plt.grid()
-plt.show()
+# plt.show()
 
 ######################################## SOC vs Distance  ################################
-plt.plot(Distance_mi, Final_SOC_Percent)
+plt.plot(Distance_mi, Final_SOC_Percent_UDDS)
 plt.title('SOC (%) for UDDS')
 plt.xlabel('Distance (mi)')
 plt.ylabel('SOC (%)')
 plt.grid()
-plt.show()
+# plt.show()
 
 ###################################   Fastsim MOdel   ######################
 
