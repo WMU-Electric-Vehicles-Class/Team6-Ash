@@ -199,6 +199,9 @@ class Battery:
         self.speed = udds_speed_ms
         self.acc = udds_accel_ms2
 
+        self.radius= wheel_radius_m
+        self.gear_ratio=gear_ratio
+
     def D_soc(self):
         f1_list = []
         f2_list = []
@@ -214,6 +217,20 @@ class Battery:
         F_prob = [x + y for (x, y) in zip(f1_list, f2_list)]
         Power_vehicle = F_prob * self.speed
         Power_axle = Power_vehicle/2
+
+        Motor_torque= ((F_prob/2)*self.radius)/self.gear_ratio
+        wheel_rpm= ((self.speed)/self.radius)*(60/2*math.pi)*self.gear_ratio
+        
+        RM_Eff_interpol = NearestNDInterpolator(
+            (RM_Speed_rpm, RM_Torque_Nm), RM_efficiency)
+        Motor_eff_rear_percent = RM_Eff_interpol(abs(wheel_rpm), abs(Motor_torque))
+        Motor_eff_rear = Motor_eff_rear_percent/100
+
+        AC_Eff_interpol = NearestNDInterpolator(
+            (AC_Speed_rpm, AC_Torque_Nm), AC_efficiency)
+        Motor_eff_front_percent = AC_Eff_interpol(abs(wheel_rpm), abs(Motor_torque))
+        Motor_eff_front = Motor_eff_front_percent/100
+
         Pbatt_front_motor = Power_axle/Motor_eff_front
         Pbatt_rear_motor = Power_axle/Motor_eff_rear
         Power_battery = Pbatt_front_motor + Pbatt_rear_motor
@@ -275,22 +292,22 @@ print(len(SOC_speed_limit))
 print(SOC_speed_limit[1369], Final_SOC_Percent_UDDS[1369])
 
 ######################################################   SOC vs Smooth Hwy   ###########################
-c1=Battery()
-c1.speed=hwy_speed_ms
-cc=Battery.D_soc(c1)
-Final_SOC_Percent_Hwy=Battery.SOC(cc)
+# c1=Battery()
+# c1.speed=hwy_speed_ms
+# cc=Battery.D_soc(c1)
+# Final_SOC_Percent_Hwy=Battery.SOC(cc)
 
-c2=Battery()
-c2.speed=smooth_hwy_ms
-ccc=Battery.D_soc(c2)
-Final_SOC_Percent_Hwy_smooth=Battery.SOC(ccc)
+# c2=Battery()
+# c2.speed=smooth_hwy_ms
+# ccc=Battery.D_soc(c2)
+# Final_SOC_Percent_Hwy_smooth=Battery.SOC(ccc)
 
-plt.plot(hwy_time_s, Final_SOC_Percent_Hwy, Final_SOC_Percent_Hwy_smooth)
-plt.xlabel('Time (s)')
-plt.ylabel('Velocity (mph)')
-plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
-plt.grid()
-plt.show()
+# plt.plot(hwy_time_s, Final_SOC_Percent_Hwy, Final_SOC_Percent_Hwy_smooth)
+# plt.xlabel('Time (s)')
+# plt.ylabel('Velocity (mph)')
+# plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
+# plt.grid()
+# plt.show()
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
