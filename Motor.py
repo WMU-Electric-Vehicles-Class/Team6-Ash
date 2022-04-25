@@ -319,7 +319,7 @@ Final_SOC_Percent_UDDS_no_first_stop=Battery.SOC(d12)
 
 plt.plot(udds_time_s, udds_speed_ms,udds_speed_ms_no_stop)
 plt.xlabel('Time (s)')
-plt.ylabel('SOC (%)')
+plt.ylabel('Speed (m/s)')
 plt.legend(["UDDS Cycle", "UDDS without first stop"])
 plt.grid()
 plt.show()
