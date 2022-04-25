@@ -75,6 +75,39 @@ plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smooth
 plt.show()
 print('distance', distance_m_hwy[len(distance_m_hwy)-1],distance_m_hwy_smooth[len(distance_m_hwy_smooth)-1])
 
+################# NYCC Drive Cycle ####################################
+nycc = np.loadtxt('nycccol.txt', dtype=int)
+nycc_time_s = nycc[:,0]
+nycc_speed_mph = nycc[:,1]
+nycc_speed_ms = nycc_speed_mph*.44704
+nycc_accel_ms2 = np.diff(nycc_speed_ms, prepend=0)
+distance_m_nycc = np.cumsum(nycc_speed_ms)
+Distance_mi_nycc = distance_m_nycc/1609
+
+########## Constant Velocity NYCC ################
+
+nycc_Speed_limit = 20  # 15 mile/hr
+
+nycc_eco = np.loadtxt('nycccol_eco.txt', dtype=int)
+nycc_speed_mph_eco = nycc_eco[:,1]
+
+nycc_speed_mph_l =[]
+for i in nycc_speed_mph_eco:
+    if i>nycc_Speed_limit:
+        i = nycc_Speed_limit
+    nycc_speed_mph_l.append(i)
+nycc_speed_mph_cons=np.array(nycc_speed_mph_l)
+nycc_speed_ms_cons= nycc_speed_mph_cons **.44704
+distance_m_nycc_cons = np.cumsum(nycc_speed_ms_cons)
+distance_mi_nycc_cons=distance_m_nycc_cons/1609
+nycc_accel_ms2_cons = np.diff(nycc_speed_ms_cons, prepend=0)
+plt.plot(Distance_mi_nycc, nycc_speed_mph)
+plt.plot(Distance_mi_nycc, nycc_speed_mph_cons)
+plt.xlabel('Distance (mi)')
+plt.ylabel('Speed (mph)')
+plt.legend(["NYCC Velocity", "NYCC Drive cycle with more constant velocity"])
+plt.grid()
+plt.show()
 
 ################### Efficiency map data points for IPM-synRM rear motor ####################
 RM_Speed_rpm = np.array([200, 100, 500, 12000, 3000, 1000, 2000, 6000, 10000, 4000,
@@ -374,6 +407,27 @@ plt.show()
 
 #print(Final_SOC_Percent_Hwy[len(Final_SOC_Percent_Hwy)-1], Final_SOC_Percent_Hwy_smooth[len(Final_SOC_Percent_Hwy_smooth)-1])
 #print(Distance_mi_hwy)
+
+######################################################   SOC vs Constant Velocity NYCC   ###########################
+n1=Battery()
+n1.speed=nycc_speed_ms
+n1.acc=nycc_accel_ms2
+nn=Battery.D_soc(n1)
+Final_SOC_Percent_nycc=Battery.SOC(nn)
+
+n2=Battery()
+n2.speed=nycc_speed_ms_cons
+n2.acc=nycc_accel_ms2_cons
+nnn=Battery.D_soc(n2)
+Final_SOC_Percent_nycc_cons=Battery.SOC(nnn)
+
+plt.plot(Distance_mi_nycc, Final_SOC_Percent_nycc)
+plt.plot(Distance_mi_nycc,Final_SOC_Percent_nycc_cons)
+plt.xlabel('Distance (mi)')
+plt.ylabel('SOC (%)')
+plt.legend(["NYCC Drive Cycle Velocity", "NYCC-ECO Driving"])
+plt.grid()
+plt.show()
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
