@@ -42,6 +42,15 @@ distance_m_udd = np.cumsum(udds_speed_ms)
 distance_mi_udds = np.cumsum(udds_speed_mips)
 #distance_mi_udds = distance_m_udd/1609
 
+################ UDDS Drive Cycle - without First stop  ###################################
+udds = np.loadtxt('uddscol_no_first_stop.txt', dtype=int)
+udds_time_s_no_stop = udds[:, 0]
+udds_speed_mph_no_stop = udds[:, 1]
+udds_speed_ms_no_stop = udds_speed_mph_no_stop*.44704
+udds_accel_ms2_no_stop = np.diff(udds_speed_ms_no_stop, prepend=0)
+distance_m_udd_no_stop = np.cumsum(udds_speed_ms_no_stop)
+Distance_mi_no_stop = distance_m_udd_no_stop/1609
+
 ################# HWY Drive Cycle ####################################
 hwy = np.loadtxt('hwycol.txt', dtype=int)
 hwy_time_s = hwy[:, 0]
@@ -302,6 +311,28 @@ plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph"])
 plt.grid()
 plt.show()
 
+################################################   SOC vs without first stop   ###########################
+d1=Battery()
+d1.speed=udds_speed_ms_no_stop
+d12=Battery.D_soc(d1)
+Final_SOC_Percent_UDDS_no_first_stop=Battery.SOC(d12)
+
+plt.plot(udds_time_s, udds_speed_ms,udds_speed_ms_no_stop)
+plt.xlabel('Time (s)')
+plt.ylabel('SOC (%)')
+plt.legend(["UDDS Cycle", "UDDS without first stop"])
+plt.grid()
+plt.show()
+
+plt.plot(udds_time_s_no_stop, Final_SOC_Percent_UDDS,Final_SOC_Percent_UDDS_no_first_stop)
+plt.xlabel('Time (s)')
+plt.ylabel('SOC (%)')
+plt.legend(["SOC in UDDS Cycle", "SOC in UDDS Cycle without first stop"])
+plt.grid()
+plt.show()
+
+#print("SOC for UDDS: ",Final_SOC_Percent_UDDS[-1],"\nSOC for UDDS no first stop: ",Final_SOC_Percent_UDDS_no_first_stop[-1] )
+
 ######################################################   SOC vs the speed limit   ###########################
 sp = Battery()
 sp.speed=udds_speed_ms_limited
@@ -387,7 +418,7 @@ plt.show()
 # fig = plt.figure(figsize=(6, 4))
 # ax1 = fig.add_subplot()
 # ax1.plot(x, y)
-# ax1.plot(x,Final_SOC_Percent)
+# ax1.plot(x,Final_SOC_Percent_UDDS)
 # ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
 # ax1.set_xlabel("Time [sec]", fontsize="large")
 # ax1.set_ylabel("SOC [%]", fontsize="large")
