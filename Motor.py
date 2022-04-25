@@ -37,8 +37,10 @@ udds_time_s = udds[:, 0]
 udds_speed_mph = udds[:, 1]
 udds_speed_ms = udds_speed_mph*.44704
 udds_accel_ms2 = np.diff(udds_speed_ms, prepend=0)
+udds_speed_mips=udds_speed_mph/3600
 distance_m_udd = np.cumsum(udds_speed_ms)
-distance_mi_udds = distance_m_udd/1609
+distance_mi_udds = np.cumsum(udds_speed_mips)
+#distance_mi_udds = distance_m_udd/1609
 
 ################# HWY Drive Cycle ####################################
 hwy = np.loadtxt('hwycol.txt', dtype=int)
@@ -54,6 +56,7 @@ smooth_hwy_ms=savgol_filter(hwy_speed_ms, 201, 3)
 smooth_hwy_mph= smooth_hwy_ms/.44704
 distance_m_hwy_smooth = np.cumsum(smooth_hwy_ms)
 distance_mi_hwy_smooth= distance_m_hwy_smooth/1609
+smooth_hwy_accel_ms2 = np.diff(smooth_hwy_ms, prepend=0)
 
 plt.plot(hwy_time_s,hwy_speed_mph)
 plt.plot(hwy_time_s,smooth_hwy_mph)
@@ -192,7 +195,7 @@ udds_speed_mph_limited=np.array(udds_speed_mph_l)
 udds_speed_ms_limited= udds_speed_mph_limited **.44704
 distance_m_udds_limited = np.cumsum(udds_speed_ms_limited)
 distance_mi_udds_limited=distance_m_udds_limited/1609
-
+udds_accel_ms2_limited = np.diff(udds_speed_ms_limited, prepend=0)
 print('udds distance',distance_m_udd[len(distance_m_udd)-1], distance_m_udds_limited[len(distance_m_udds_limited)-1])
 
 
@@ -291,7 +294,8 @@ plt.show()
 
 ##################################################### Normal speed vs limited speed   ###########################
 
-plt.plot(distance_mi_udds, udds_speed_mph, udds_speed_mph_limited)
+plt.plot(distance_mi_udds, udds_speed_mph)
+plt.plot(distance_mi_udds, udds_speed_mph_limited)
 plt.xlabel('Distance (mi)')
 plt.ylabel('Speed (mph)')
 plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph"])
@@ -301,38 +305,44 @@ plt.show()
 ######################################################   SOC vs the speed limit   ###########################
 sp = Battery()
 sp.speed=udds_speed_ms_limited
+sp.acc=udds_accel_ms2_limited
 sp1 = Battery.D_soc(sp)
 SOC_speed_limit = Battery.SOC(sp1)
 
-plt.plot(distance_mi_udds, Final_SOC_Percent_UDDS, SOC_speed_limit)
+plt.plot(distance_mi_udds, Final_SOC_Percent_UDDS)
+plt.plot(distance_mi_udds, SOC_speed_limit)
 plt.xlabel('Distance (mi)')
 plt.ylabel('SOC (%)')
 plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph", ])
 plt.grid()
 plt.show()
 
-print(len(SOC_speed_limit))
-print(SOC_speed_limit[1369], Final_SOC_Percent_UDDS[1369])
+#print(len(SOC_speed_limit))
+#print(SOC_speed_limit[1369], Final_SOC_Percent_UDDS[1369])
 
 ######################################################   SOC vs Smooth Hwy   ###########################
 c1=Battery()
 c1.speed=hwy_speed_ms
+c1.acc=hwy_accel_ms2
 cc=Battery.D_soc(c1)
 Final_SOC_Percent_Hwy=Battery.SOC(cc)
 
 c2=Battery()
 c2.speed=smooth_hwy_ms
+c2.acc=smooth_hwy_accel_ms2
 ccc=Battery.D_soc(c2)
 Final_SOC_Percent_Hwy_smooth=Battery.SOC(ccc)
 
-plt.plot(Distance_mi_hwy, Final_SOC_Percent_Hwy, Final_SOC_Percent_Hwy_smooth)
+plt.plot(Distance_mi_hwy, Final_SOC_Percent_Hwy)
+plt.plot(Distance_mi_hwy,Final_SOC_Percent_Hwy_smooth)
 plt.xlabel('Distance (mi)')
 plt.ylabel('SOC (%)')
 plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
 plt.grid()
 plt.show()
 
-print(Final_SOC_Percent_Hwy[len(Final_SOC_Percent_Hwy)-1], Final_SOC_Percent_Hwy_smooth[len(Final_SOC_Percent_Hwy_smooth)-1])
+#print(Final_SOC_Percent_Hwy[len(Final_SOC_Percent_Hwy)-1], Final_SOC_Percent_Hwy_smooth[len(Final_SOC_Percent_Hwy_smooth)-1])
+#print(Distance_mi_hwy)
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
@@ -345,11 +355,12 @@ s3.v_mass = 2678.4   # 20 percent more
 s3d = Battery.D_soc(s3)
 Final_SOC_more_weight = Battery.SOC(s3d)
 
-plt.plot(udds_time_s, Final_SOC_Percent_UDDS, Final_SOC_less_weight)
+plt.plot(udds_time_s, Final_SOC_Percent_UDDS)
 plt.plot(udds_time_s, Final_SOC_more_weight)
+plt.plot(udds_time_s, Final_SOC_less_weight)
 plt.xlabel('Time Cycle (s)')
 plt.ylabel('SOC (%)')
-plt.legend(["Actual Weight", "20% Lighter", "20% Heavier"])
+plt.legend(["Actual Weight", "20% Heavier","20% Lighter"])
 plt.grid()
 plt.show()
 
