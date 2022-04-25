@@ -38,7 +38,7 @@ udds_speed_mph = udds[:, 1]
 udds_speed_ms = udds_speed_mph*.44704
 udds_accel_ms2 = np.diff(udds_speed_ms, prepend=0)
 distance_m_udd = np.cumsum(udds_speed_ms)
-Distance_mi = distance_m_udd/1609
+distance_mi_udds = distance_m_udd/1609
 
 ################# HWY Drive Cycle ####################################
 hwy = np.loadtxt('hwycol.txt', dtype=int)
@@ -52,12 +52,17 @@ Distance_mi_hwy = distance_m_hwy/1609
 ########## Smooth HWY ################
 smooth_hwy_ms=savgol_filter(hwy_speed_ms, 201, 3)
 smooth_hwy_mph= smooth_hwy_ms/.44704
+distance_m_hwy_smooth = np.cumsum(smooth_hwy_ms)
+distance_mi_hwy_smooth= distance_m_hwy_smooth/1609
+
 plt.plot(hwy_time_s,hwy_speed_mph)
 plt.plot(hwy_time_s,smooth_hwy_mph)
 plt.xlabel('Time (s)')
 plt.ylabel('Velocity (mph)')
 plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
 plt.show()
+print('distance', distance_m_hwy[len(distance_m_hwy)-1],distance_m_hwy_smooth[len(distance_m_hwy_smooth)-1])
+
 
 ################### Efficiency map data points for IPM-synRM rear motor ####################
 RM_Speed_rpm = np.array([200, 100, 500, 12000, 3000, 1000, 2000, 6000, 10000, 4000,
@@ -185,6 +190,12 @@ for i in udds_speed_mph:
     udds_speed_mph_l.append(i)
 udds_speed_mph_limited=np.array(udds_speed_mph_l)
 udds_speed_ms_limited= udds_speed_mph_limited **.44704
+distance_m_udds_limited = np.cumsum(udds_speed_ms_limited)
+distance_mi_udds_limited=distance_m_udds_limited/1609
+
+print('udds distance',distance_m_udd[len(distance_m_udd)-1], distance_m_udds_limited[len(distance_m_udds_limited)-1])
+
+
 
 class Battery:
     def __init__(self):
@@ -280,8 +291,8 @@ plt.show()
 
 ##################################################### Normal speed vs limited speed   ###########################
 
-plt.plot(udds_time_s, udds_speed_mph, udds_speed_mph_limited)
-plt.xlabel('Time Cycle (s)')
+plt.plot(distance_mi_udds, udds_speed_mph, udds_speed_mph_limited)
+plt.xlabel('Distance (mi)')
 plt.ylabel('Speed (mph)')
 plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph"])
 plt.grid()
@@ -293,8 +304,8 @@ sp.speed=udds_speed_ms_limited
 sp1 = Battery.D_soc(sp)
 SOC_speed_limit = Battery.SOC(sp1)
 
-plt.plot(udds_time_s, Final_SOC_Percent_UDDS, SOC_speed_limit)
-plt.xlabel('Time Cycle (s)')
+plt.plot(distance_mi_udds, Final_SOC_Percent_UDDS, SOC_speed_limit)
+plt.xlabel('Distance (mi)')
 plt.ylabel('SOC (%)')
 plt.legend(["UDDS Velocity", "UDDS Velocity Omitting Speeds Below 15 mph", ])
 plt.grid()
@@ -314,8 +325,8 @@ c2.speed=smooth_hwy_ms
 ccc=Battery.D_soc(c2)
 Final_SOC_Percent_Hwy_smooth=Battery.SOC(ccc)
 
-plt.plot(hwy_time_s, Final_SOC_Percent_Hwy, Final_SOC_Percent_Hwy_smooth)
-plt.xlabel('Time (s)')
+plt.plot(Distance_mi_hwy, Final_SOC_Percent_Hwy, Final_SOC_Percent_Hwy_smooth)
+plt.xlabel('Distance (mi)')
 plt.ylabel('SOC (%)')
 plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
 plt.grid()
@@ -343,7 +354,7 @@ plt.grid()
 plt.show()
 
 ######################################## SOC vs Distance  ################################
-plt.plot(Distance_mi, Final_SOC_Percent_UDDS)
+plt.plot(distance_mi_udds, Final_SOC_Percent_UDDS)
 plt.title('SOC (%) for UDDS')
 plt.xlabel('Distance (mi)')
 plt.ylabel('SOC (%)')
