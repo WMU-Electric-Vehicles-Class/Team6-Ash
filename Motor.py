@@ -5,7 +5,7 @@ from scipy.interpolate import LinearNDInterpolator
 from scipy.integrate import quad
 from scipy.interpolate import NearestNDInterpolator
 from turtle import color
-# from fastsim import simdrive, vehicle, cycle
+from fastsim import simdrive, vehicle, cycle
 import sys
 import os
 from pathlib import Path
@@ -76,7 +76,7 @@ plt.show()
 print('distance', distance_m_hwy[len(distance_m_hwy)-1],distance_m_hwy_smooth[len(distance_m_hwy_smooth)-1])
 
 ################# NYCC Drive Cycle ####################################
-nycc = np.loadtxt('nycccol.txt', dtype=int)
+nycc = np.loadtxt('nycccol_eco.txt', dtype=int)
 nycc_time_s = nycc[:,0]
 nycc_speed_mph = nycc[:,1]
 nycc_speed_ms = nycc_speed_mph*.44704
@@ -143,82 +143,6 @@ plt.ylabel('Motor Torque (Nm)')
 plt.title('Efficiency Map for AC Induction Motor')
 plt.show()
 
-###################  Force due to mass of the vehicle (Fm) in Newton ########################
-Fm = empty_vehicle_weight_kg*udds_accel_ms2
-
-# Force due to Rolling Resistance (Frr) in Newton
-Frr = Crr*empty_vehicle_weight_kg*g
-
-# Aerodynamic force (Fd) in Newton
-# Cd=Drag Coefficient
-Vehicle_Front_Area_m2 = Vehicle_Height_m*Vehicle_Width_m
-Fd = 0.5*Cd*Air_Density*Vehicle_Front_Area_m2*udds_speed_ms**2
-
-# Total Force (Fprop) in Newton
-Fprop = Fd+Frr+Fm
-
-# Force in each axle (Fw) in Newton
-Faxle = Fprop/2
-
-################## torque per wheel in Nm ###########################
-wheel_torque_Nm = Faxle*wheel_radius_m
-
-# angular velocity of wheel
-angular_speed_rads = (udds_speed_ms)/wheel_radius_m
-wheel_rpm = angular_speed_rads*(60/2*math.pi)
-
-############### motor angular velocity from axle 9:1 ratio, applies to both motors  #######################
-
-motor_rpm = wheel_rpm*gear_ratio
-motor_torque_Nm = wheel_torque_Nm/gear_ratio
-
-# plt.plot(motor_rpm, motor_torque_Nm)
-# plt.show()
-
-############## Motor Power_Output Power #######################
-Pmotor_kW = motor_rpm*motor_torque_Nm*(2*math.pi/60)
-
-############## Interpolating Motor Efficiency_IPM-synRM rear motor #######################
-RM_Eff_interpol = NearestNDInterpolator(
-    (RM_Speed_rpm, RM_Torque_Nm), RM_efficiency)
-Motor_eff_rear_percent = RM_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
-Motor_eff_rear = Motor_eff_rear_percent/100
-# print(Motor_eff_rear)
-
-############## Interpolating Motor Efficiency_IAC Induction front motor #######################
-AC_Eff_interpol = NearestNDInterpolator(
-    (AC_Speed_rpm, AC_Torque_Nm), AC_efficiency)
-Motor_eff_front_percent = AC_Eff_interpol(abs(motor_rpm), abs(motor_torque_Nm))
-Motor_eff_front = Motor_eff_front_percent/100
-# print(Motor_eff_front)
-
-############## Battery Power_Input Power #######################
-Pbatt_kW = Pmotor_kW/Motor_eff_rear
-# Pbatt_W = Pbatt_kW*1000
-
-# plt.plot(motor_rpm, Pmotor_kW)
-# plt.plot(motor_rpm, Pbatt_kW)
-# plt.show()
-
-# #########################   SOC    ######################################
-
-# battery_capacity_Ah = 33
-# battery_capacity_As = 33*3600
-# open_circuit_voltage = Voltage_open_c_v
-# SOC = [1]  # initialize SOC at 100%
-# for i in range(1, len(udds_time_s)):
-#     SOC.append(SOC[i-1]-(udds_time_s[i]-udds_time_s[i-1])*(open_circuit_voltage-np.sqrt(np.abs(
-#         (open_circuit_voltage**2)-4*Internal_resistance*Pbatt_kW[i])))/(2*Internal_resistance*battery_capacity_As))
-# SOC_percent = [i * 100 for i in SOC]
-
-# plt.plot(udds_time_s, SOC_percent)
-# plt.title('SOC(%) for UDDS')
-# plt.xlabel('Time')
-# plt.ylabel('SOC(%)')
-# plt.grid()
-#plt.show()
-
-
 ####################### SOC
 ####################### SOC vs Distance
 ####################### SOC vs weight
@@ -238,7 +162,7 @@ udds_speed_ms_limited= udds_speed_mph_limited **.44704
 distance_m_udds_limited = np.cumsum(udds_speed_ms_limited)
 distance_mi_udds_limited=distance_m_udds_limited/1609
 udds_accel_ms2_limited = np.diff(udds_speed_ms_limited, prepend=0)
-print('udds distance',distance_m_udd[len(distance_m_udd)-1], distance_m_udds_limited[len(distance_m_udds_limited)-1])
+#print('udds distance',distance_m_udd[len(distance_m_udd)-1], distance_m_udds_limited[len(distance_m_udds_limited)-1])
 
 
 
@@ -334,6 +258,26 @@ plt.ylabel('SOC (%)')
 plt.grid()
 plt.show()
 
+#####################################    SOC Vs With/without regenerative braking for UDDS    #####################################
+s1z = Battery()
+szb = Battery.D_soc(s1z)
+Final_SOC_Percent_UDDS = Battery.SOC(szb)
+
+sxz2 = Battery()
+sxz2.reg = 0
+szx2 = Battery.D_soc(sxz2)
+Final_SOC_Percent_No_Reg_UDDS = Battery.SOC(szx2)
+# print("SOC for without Gen UDDS:", Final_SOC_Percent_No_Reg_UDDS[-1])
+# print("SOC for with Gen UDDS:", Final_SOC_Percent_UDDS[-1])
+
+
+plt.plot(udds_time_s, Final_SOC_Percent_UDDS, Final_SOC_Percent_No_Reg_UDDS)
+plt.legend(['With regenerative braking in UDDS Cycle',
+           'Without regenerative braking in UDDS Cycle'])
+plt.xlabel('Time Cycle(s)')
+plt.ylabel('SOC(%)')
+plt.grid()
+plt.show()
 ##################################################### Normal speed vs limited speed   ###########################
 
 plt.plot(distance_mi_udds, udds_speed_mph)
@@ -460,22 +404,22 @@ plt.show()
 
 ###################################   Fastsim MOdel   ######################
 
-# veh = vehicle.Vehicle(22)
-# veh.Scenario_name
+veh = vehicle.Vehicle(22)
+veh.Scenario_name
 
-# cyc = cycle.Cycle("udds")
-# sim = simdrive.SimDriveClassic(cyc, veh)
-# sim.sim_drive()
-# print("soc:", sim.soc)
-# x = cyc.cycSecs
-# y = (sim.soc)*100
+cyc = cycle.Cycle("udds")
+sim = simdrive.SimDriveClassic(cyc, veh)
+sim.sim_drive()
+print("soc:", sim.soc)
+x = cyc.cycSecs
+y = (sim.soc)*100
 
-# fig = plt.figure(figsize=(6, 4))
-# ax1 = fig.add_subplot()
-# ax1.plot(x, y)
-# ax1.plot(x,Final_SOC_Percent_UDDS)
-# ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
-# ax1.set_xlabel("Time [sec]", fontsize="large")
-# ax1.set_ylabel("SOC [%]", fontsize="large")
-# ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
-# plt.show()
+fig = plt.figure(figsize=(6, 4))
+ax1 = fig.add_subplot()
+ax1.plot(x, y)
+ax1.plot(x,Final_SOC_Percent_UDDS)
+ax1.set_title("Tesla S & Tesla Model 3 SOC vs. Time", fontsize="large", fontweight="bold")
+ax1.set_xlabel("Time [sec]", fontsize="large")
+ax1.set_ylabel("SOC [%]", fontsize="large")
+ax1.legend(["Tesla Model S60","Tesla model 3 (Long Range )"])
+plt.show()
