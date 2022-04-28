@@ -73,7 +73,7 @@ plt.xlabel('Time (s)')
 plt.ylabel('Velocity (mph)')
 plt.legend(["Highway Drive Cycle Velocity", "Highway Drive Cycle Velocity Smoothed"])
 plt.show()
-print('distance', distance_m_hwy[len(distance_m_hwy)-1],distance_m_hwy_smooth[len(distance_m_hwy_smooth)-1])
+#print('distance', distance_m_hwy[len(distance_m_hwy)-1],distance_m_hwy_smooth[len(distance_m_hwy_smooth)-1])
 
 ################# NYCC Drive Cycle ####################################
 nycc = np.loadtxt('nycccol_eco.txt', dtype=int)
@@ -372,7 +372,7 @@ plt.ylabel('SOC (%)')
 plt.legend(["NYCC Drive Cycle Velocity", "NYCC at more Constant Velocity"])
 plt.grid()
 plt.show()
-print('SOC', Final_SOC_Percent_nycc[len(Final_SOC_Percent_nycc)-1],Final_SOC_Percent_nycc_cons[len(Final_SOC_Percent_nycc_cons)-1])
+#print('SOC', Final_SOC_Percent_nycc[len(Final_SOC_Percent_nycc)-1],Final_SOC_Percent_nycc_cons[len(Final_SOC_Percent_nycc_cons)-1])
 
 ############################################################ SOC vs weight   #################################
 s2 = Battery()
